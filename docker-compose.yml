@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kasilink
+      POSTGRES_PASSWORD: kasilink
+      POSTGRES_DB: kasilink
+    ports:
+      - "5432:5432"
+    volumes:
+      - kasilink_db:/var/lib/postgresql/data
+
+volumes:
+  kasilink_db:
