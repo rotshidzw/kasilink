@@ -12,7 +12,7 @@ const credentialsSchema = z.object({
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
-    strategy: "database"
+    strategy: "jwt"
   },
   providers: [
     CredentialsProvider({
@@ -39,10 +39,17 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async session({ session, user }) {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
       if (session.user) {
-        session.user.id = user.id;
-        session.user.role = user.role;
+        session.user.id = token.id as string;
+        session.user.role = token.role as typeof session.user.role;
       }
       return session;
     }
