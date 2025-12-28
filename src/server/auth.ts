@@ -26,15 +26,20 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: parsed.data.email }
-        });
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: parsed.data.email }
+          });
 
-        if (!user) {
+          if (!user) {
+            return null;
+          }
+
+          return user;
+        } catch (error) {
+          console.error("Credentials sign-in failed. Check DATABASE_URL and database status.", error);
           return null;
         }
-
-        return user;
       }
     })
   ],
