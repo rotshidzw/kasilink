@@ -9,6 +9,13 @@ const credentialsSchema = z.object({
   email: z.string().email()
 });
 
+const demoRoleByEmail = new Map([
+  ["resident@kasilink.local", "RESIDENT"],
+  ["youth@kasilink.local", "YOUTH"],
+  ["business@kasilink.local", "BUSINESS"],
+  ["admin@kasilink.local", "ADMIN"]
+]);
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
@@ -27,13 +34,16 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const user = await prisma.user.findUnique({
-            where: { email: parsed.data.email }
+          const role = demoRoleByEmail.get(parsed.data.email) ?? "RESIDENT";
+          const user = await prisma.user.upsert({
+            where: { email: parsed.data.email },
+            update: {},
+            create: {
+              email: parsed.data.email,
+              name: parsed.data.email.split("@")[0],
+              role
+            }
           });
-
-          if (!user) {
-            return null;
-          }
 
           return user;
         } catch (error) {
