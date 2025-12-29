@@ -23,27 +23,18 @@ enum RequestStatus {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String?
-  email     String?  @unique
-  role      Role     @default(RESIDENT)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  accounts Account[]
-  sessions Session[]
-
-  // Resident creates requests
-  requests ServiceRequest[] @relation("ResidentRequests")
-
-  // Youth/Business claims requests
-  claimed ServiceRequest[] @relation("ClaimedBy")
-
-  // User RSVPs to events
-  rsvps RSVP[]
-
-  // ✅ FIX: Back-reference for Event.organizer
-  eventsOrganized Event[] @relation("UserOrganizedEvents")
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  role          Role      @default(RESIDENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  requests      ServiceRequest[] @relation("ResidentRequests")
+  claimed       ServiceRequest[] @relation("ClaimedBy")
+  organizedEvents Event[]
+  rsvps         RSVP[]
 }
 
 model ServiceRequest {
@@ -54,29 +45,23 @@ model ServiceRequest {
   status      RequestStatus @default(NEW)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
-
-  residentId String
-  resident   User   @relation("ResidentRequests", fields: [residentId], references: [id])
-
+  residentId  String
+  resident    User          @relation("ResidentRequests", fields: [residentId], references: [id])
   claimedById String?
-  claimedBy   User?   @relation("ClaimedBy", fields: [claimedById], references: [id])
+  claimedBy   User?         @relation("ClaimedBy", fields: [claimedById], references: [id])
 }
 
 model Event {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  location    String
-  startsAt    DateTime
-  createdAt   DateTime @default(now())
-
-  organizerId String
-
-  // ✅ FIX: Named relation to match User.eventsOrganized
-  organizer User @relation("UserOrganizedEvents", fields: [organizerId], references: [id])
-
-  rsvps         RSVP[]
-  proofImageUrl String?
+  id             String   @id @default(cuid())
+  title          String
+  description    String
+  location       String
+  startsAt       DateTime
+  createdAt      DateTime @default(now())
+  organizerId    String
+  organizer      User     @relation(fields: [organizerId], references: [id])
+  rsvps          RSVP[]
+  proofImageUrl  String?
 }
 
 model RSVP {
@@ -84,9 +69,8 @@ model RSVP {
   eventId   String
   userId    String
   createdAt DateTime @default(now())
-
-  event Event @relation(fields: [eventId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
+  event     Event    @relation(fields: [eventId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@unique([eventId, userId])
 }
@@ -104,8 +88,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -115,8 +98,7 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {

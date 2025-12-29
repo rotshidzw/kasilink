@@ -48,3 +48,7 @@ npm run dev
 
 ## Proof Image Storage
 Proof uploads are handled by a storage provider abstraction in `src/server/providers/storage.ts`. The default is `LocalStorageProvider`, which saves files to `/public/uploads` and returns a public URL. A `HuaweiOBSProvider` stub is included for future integration.
+
+## Troubleshooting
+**Login fails with `CredentialsSignin`**  
+Make sure Postgres is running (`docker-compose up -d`), your `.env` `DATABASE_URL` matches the database credentials, and run `npm run prisma:migrate` + `npm run seed` before signing in.
