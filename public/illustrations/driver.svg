@@ -1,0 +1,9 @@
+<svg width="360" height="260" viewBox="0 0 360 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="360" height="260" rx="28" fill="#F8FAFC"/>
+  <rect x="60" y="60" width="240" height="120" rx="20" fill="#E0F2FE"/>
+  <circle cx="120" cy="150" r="20" fill="#38BDF8"/>
+  <circle cx="240" cy="150" r="20" fill="#38BDF8"/>
+  <rect x="100" y="90" width="160" height="14" rx="7" fill="#94A3B8"/>
+  <rect x="100" y="110" width="120" height="10" rx="5" fill="#CBD5F5"/>
+  <text x="100" y="210" fill="#0F172A" font-family="Arial" font-size="14">Driver route</text>
+</svg>

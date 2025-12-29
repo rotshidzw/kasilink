@@ -10,69 +10,223 @@ datasource db {
 enum Role {
   RESIDENT
   BUSINESS
-  YOUTH
+  DRIVER
   ADMIN
 }
 
-enum RequestStatus {
-  NEW
-  CLAIMED
+enum ServiceRequestStatus {
+  OPEN
+  ASSIGNED
   IN_PROGRESS
   COMPLETED
   CANCELLED
 }
 
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PACKING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum DeliveryJobStatus {
+  OPEN
+  ASSIGNED
+  EN_ROUTE
+  PICKED_UP
+  DELIVERED
+  CANCELLED
+}
+
+enum InventoryStatus {
+  IN_STOCK
+  LOW
+  OUT_OF_STOCK
+}
+
+enum AnnouncementType {
+  COMMUNITY
+  RESTOCK
+}
+
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  role          Role      @default(RESIDENT)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  accounts      Account[]
-  sessions      Session[]
-  requests      ServiceRequest[] @relation("ResidentRequests")
-  claimed       ServiceRequest[] @relation("ClaimedBy")
-  organizedEvents Event[]
-  rsvps         RSVP[]
+  id             String          @id @default(cuid())
+  name           String?
+  email          String          @unique
+  hashedPassword String
+  role           Role            @default(RESIDENT)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  profile        Profile?
+  addresses      Address[]
+  shops          Shop[]
+  requests       ServiceRequest[] @relation("ResidentRequests")
+  assigned       ServiceRequest[] @relation("AssignedRequests")
+  orders         Order[]
+  deliveryJobs   DeliveryJob[]    @relation("DriverJobs")
+  reviewsWritten Review[]         @relation("ReviewsWritten")
+  reviewsReceived Review[]        @relation("ReviewsReceived")
+  announcements  Announcement[]
+  accounts       Account[]
+  sessions       Session[]
+}
+
+model Profile {
+  id     String  @id @default(cuid())
+  userId String  @unique
+  phone  String?
+  bio    String?
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  userId     String
+  label      String?
+  line1      String
+  line2      String?
+  city       String
+  province   String?
+  postalCode String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders     Order[]
+}
+
+model Shop {
+  id         String    @id @default(cuid())
+  ownerId    String
+  name       String
+  description String?
+  phone      String?
+  line1      String
+  line2      String?
+  city       String
+  province   String?
+  postalCode String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  owner      User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  products   Product[]
+  orders     Order[]
+  reviews    Review[]
+}
+
+model Product {
+  id          String     @id @default(cuid())
+  shopId      String
+  name        String
+  description String?
+  price       Decimal    @db.Decimal(10, 2)
+  unit        String
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  shop        Shop       @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  inventory   Inventory?
+  orderItems  OrderItem[]
+}
+
+model Inventory {
+  id        String          @id @default(cuid())
+  productId String          @unique
+  status    InventoryStatus @default(IN_STOCK)
+  quantity  Int             @default(0)
+  restockAt DateTime?
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ServiceCategory {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  icon        String?
+  requests    ServiceRequest[]
 }
 
 model ServiceRequest {
-  id          String        @id @default(cuid())
-  type        String
+  id          String               @id @default(cuid())
+  title       String
   description String
   address     String
-  status      RequestStatus @default(NEW)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  status      ServiceRequestStatus @default(OPEN)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
   residentId  String
-  resident    User          @relation("ResidentRequests", fields: [residentId], references: [id])
-  claimedById String?
-  claimedBy   User?         @relation("ClaimedBy", fields: [claimedById], references: [id])
+  assignedToId String?
+  categoryId  String
+  resident    User                 @relation("ResidentRequests", fields: [residentId], references: [id], onDelete: Cascade)
+  assignedTo  User?                @relation("AssignedRequests", fields: [assignedToId], references: [id])
+  category    ServiceCategory      @relation(fields: [categoryId], references: [id])
+  deliveryJob DeliveryJob?
 }
 
-model Event {
-  id             String   @id @default(cuid())
-  title          String
-  description    String
-  location       String
-  startsAt       DateTime
-  createdAt      DateTime @default(now())
-  organizerId    String
-  organizer      User     @relation(fields: [organizerId], references: [id])
-  rsvps          RSVP[]
-  proofImageUrl  String?
+model Order {
+  id               String      @id @default(cuid())
+  residentId       String
+  shopId           String
+  status           OrderStatus @default(PENDING)
+  total            Decimal     @db.Decimal(10, 2)
+  deliveryAddressId String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  resident         User        @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  shop             Shop        @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  deliveryAddress  Address?    @relation(fields: [deliveryAddressId], references: [id])
+  items            OrderItem[]
+  deliveryJob      DeliveryJob?
 }
 
-model RSVP {
+model OrderItem {
   id        String   @id @default(cuid())
-  eventId   String
-  userId    String
-  createdAt DateTime @default(now())
-  event     Event    @relation(fields: [eventId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  orderId   String
+  productId String
+  quantity  Int
+  price     Decimal  @db.Decimal(10, 2)
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+}
 
-  @@unique([eventId, userId])
+model DeliveryJob {
+  id         String            @id @default(cuid())
+  orderId    String?           @unique
+  requestId  String?           @unique
+  driverId   String?
+  status     DeliveryJobStatus @default(OPEN)
+  otpCode    String
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  order      Order?            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  request    ServiceRequest?   @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  driver     User?             @relation("DriverJobs", fields: [driverId], references: [id])
+}
+
+model Review {
+  id             String   @id @default(cuid())
+  rating         Int
+  comment        String?
+  reviewerId     String
+  reviewedUserId String?
+  shopId         String?
+  createdAt      DateTime @default(now())
+  reviewer       User     @relation("ReviewsWritten", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewedUser   User?    @relation("ReviewsReceived", fields: [reviewedUserId], references: [id])
+  shop           Shop?    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+}
+
+model Announcement {
+  id          String           @id @default(cuid())
+  title       String
+  body        String
+  type        AnnouncementType @default(COMMUNITY)
+  startsAt    DateTime?
+  createdAt   DateTime         @default(now())
+  createdById String
+  createdBy   User             @relation(fields: [createdById], references: [id], onDelete: Cascade)
 }
 
 model Account {

@@ -1,133 +1,84 @@
-"use client";
+import { CalendarDays, Megaphone } from "lucide-react";
 
-import { useState } from "react";
-import { useSession } from "next-auth/react";
-
-import { api } from "@/app/trpc";
-import { Button } from "@/components/ui/button";
+import { prisma } from "@/server/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-export default function EventsPage() {
-  const { data: session } = useSession();
-  const role = session?.user?.role;
-  const utils = api.useUtils();
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
-  const [startsAt, setStartsAt] = useState("");
-
-  const eventsQuery = api.event.list.useQuery(undefined, { enabled: !!role });
-  const createEvent = api.event.create.useMutation({
-    onSuccess: () => {
-      setTitle("");
-      setDescription("");
-      setLocation("");
-      setStartsAt("");
-      void utils.event.list.invalidate();
-    }
-  });
-
-  const rsvp = api.event.rsvp.useMutation({
-    onSuccess: () => void utils.event.list.invalidate()
-  });
-
-  const addProof = api.event.addProof.useMutation({
-    onSuccess: () => void utils.event.list.invalidate()
-  });
-
-  const handleUpload = async (eventId: string, file: File | null) => {
-    if (!file) return;
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const response = await fetch("/api/upload", { method: "POST", body: formData });
-    const data = (await response.json()) as { url?: string };
-    if (data.url) {
-      addProof.mutate({ eventId, proofImageUrl: data.url });
-    }
-  };
+export default async function EventsPage() {
+  const [restockAnnouncements, communityAnnouncements] = await Promise.all([
+    prisma.announcement.findMany({ where: { type: "RESTOCK" }, orderBy: { startsAt: "asc" } }),
+    prisma.announcement.findMany({ where: { type: "COMMUNITY" }, orderBy: { startsAt: "asc" } })
+  ]);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.1fr,1fr]">
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-slate-900">Restock days</h1>
+        <p className="text-sm text-slate-600">
+          Plan ahead with scheduled spaza restock windows and community announcements.
+        </p>
+      </div>
+
       <Card>
-        <CardHeader>
-          <CardTitle>Cleanup events</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <CalendarDays className="h-5 w-5" />
+            Upcoming restock days
+          </CardTitle>
+          <Badge variant="secondary">{restockAnnouncements.length} scheduled</Badge>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {eventsQuery.data?.map((event) => (
-            <div key={event.id} className="rounded-lg border border-slate-200 p-4">
-              <h3 className="text-lg font-semibold text-slate-900">{event.title}</h3>
-              <p className="text-sm text-slate-600">{event.description}</p>
-              <div className="mt-2 text-xs text-slate-500">
-                {event.location} · {new Date(event.startsAt).toLocaleString()}
-              </div>
-              {event.proofImageUrl && (
-                <img
-                  src={event.proofImageUrl}
-                  alt="Proof"
-                  className="mt-3 w-full max-w-sm rounded-lg border border-slate-200"
-                />
-              )}
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <Button size="sm" onClick={() => rsvp.mutate({ eventId: event.id })}>
-                  RSVP ({event.rsvps.length})
-                </Button>
-                {role === "ADMIN" && (
-                  <label className="cursor-pointer text-xs font-medium text-slate-600">
-                    Upload proof
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(fileEvent) => handleUpload(event.id, fileEvent.target.files?.[0] ?? null)}
-                    />
-                  </label>
-                )}
-              </div>
-            </div>
-          ))}
-          {!eventsQuery.data?.length && <p className="text-sm text-slate-600">No events yet.</p>}
+        <CardContent>
+          {restockAnnouncements.length === 0 ? (
+            <p className="text-sm text-slate-600">No restock days announced yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Event</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Details</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {restockAnnouncements.map((announcement) => (
+                  <TableRow key={announcement.id}>
+                    <TableCell className="font-medium text-slate-900">{announcement.title}</TableCell>
+                    <TableCell>
+                      {announcement.startsAt
+                        ? new Date(announcement.startsAt).toLocaleDateString()
+                        : "TBA"}
+                    </TableCell>
+                    <TableCell>{announcement.body}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Create an event</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Megaphone className="h-5 w-5" />
+            Community highlights
+          </CardTitle>
+          <Badge variant="secondary">{communityAnnouncements.length} updates</Badge>
         </CardHeader>
         <CardContent className="space-y-4">
-          {role === "ADMIN" ? (
-            <>
-              <Input placeholder="Title" value={title} onChange={(event) => setTitle(event.target.value)} />
-              <Input
-                placeholder="Description"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-              />
-              <Input
-                placeholder="Location"
-                value={location}
-                onChange={(event) => setLocation(event.target.value)}
-              />
-              <Input
-                type="datetime-local"
-                value={startsAt}
-                onChange={(event) => setStartsAt(event.target.value)}
-              />
-              <Button
-                className="w-full"
-                onClick={() =>
-                  createEvent.mutate({ title, description, location, startsAt: new Date(startsAt).toISOString() })
-                }
-                disabled={createEvent.isPending || !startsAt}
-              >
-                Create event
-              </Button>
-            </>
-          ) : (
-            <p className="text-sm text-slate-600">Admins can create cleanup events.</p>
-          )}
+          {communityAnnouncements.length === 0 && <p className="text-sm text-slate-600">No updates yet.</p>}
+          {communityAnnouncements.map((announcement) => (
+            <div key={announcement.id} className="rounded-lg border border-slate-200 p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-semibold text-slate-900">{announcement.title}</h3>
+                <Badge variant="outline">
+                  {announcement.startsAt ? new Date(announcement.startsAt).toLocaleDateString() : "Ongoing"}
+                </Badge>
+              </div>
+              <p className="mt-2 text-sm text-slate-600">{announcement.body}</p>
+            </div>
+          ))}
         </CardContent>
       </Card>
     </div>
