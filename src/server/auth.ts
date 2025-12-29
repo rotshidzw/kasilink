@@ -4,74 +4,80 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { z } from "zod";
 
 import { prisma } from "@/server/db";
+import { Role } from "@prisma/client"; // ✅ add this
 
 const credentialsSchema = z.object({
-  email: z.string().email()
+  email: z.string().email(),
 });
 
-const demoRoleByEmail = new Map([
-  ["resident@kasilink.local", "RESIDENT"],
-  ["youth@kasilink.local", "YOUTH"],
-  ["business@kasilink.local", "BUSINESS"],
-  ["admin@kasilink.local", "ADMIN"]
+// ✅ make it Role, not string
+const demoRoleByEmail = new Map<string, Role>([
+  ["resident@kasilink.local", Role.RESIDENT],
+  ["youth@kasilink.local", Role.YOUTH],
+  ["business@kasilink.local", Role.BUSINESS],
+  ["admin@kasilink.local", Role.ADMIN],
 ]);
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
-    strategy: "jwt"
+    strategy: "jwt",
   },
   providers: [
     CredentialsProvider({
       name: "Email",
       credentials: {
-        email: { label: "Email", type: "email" }
+        email: { label: "Email", type: "email" },
       },
       async authorize(credentials) {
         const parsed = credentialsSchema.safeParse(credentials);
-        if (!parsed.success) {
-          return null;
-        }
+        if (!parsed.success) return null;
 
         try {
-          const role = demoRoleByEmail.get(parsed.data.email) ?? "RESIDENT";
+          // ✅ role is Role enum now
+          const role = demoRoleByEmail.get(parsed.data.email) ?? Role.RESIDENT;
+
           const user = await prisma.user.upsert({
             where: { email: parsed.data.email },
             update: {},
             create: {
               email: parsed.data.email,
               name: parsed.data.email.split("@")[0],
-              role
-            }
+              role, // ✅ Role enum value
+            },
           });
 
           return user;
         } catch (error) {
-          console.error("Credentials sign-in failed. Check DATABASE_URL and database status.", error);
+          console.error(
+            "Credentials sign-in failed. Check DATABASE_URL and database status.",
+            error,
+          );
           return null;
         }
-      }
-    })
+      },
+    }),
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        // ✅ will be typed after module augmentation (next step)
+        token.role = (user as any).role;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as typeof session.user.role;
+        session.user.role = token.role as Role; // ✅ cleaner
       }
       return session;
-    }
+    },
   },
   pages: {
-    signIn: "/login"
-  }
+    signIn: "/login",
+  },
 };
 
 export const getServerAuthSession = () => getServerSession(authOptions);
