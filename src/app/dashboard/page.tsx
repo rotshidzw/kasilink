@@ -1,58 +1,53 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useSession } from "next-auth/react";
-
-import { api } from "@/app/trpc";
+import { getServerAuthSession } from "@/server/auth";
+import { prisma } from "@/server/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function DashboardPage() {
-  const { data: session } = useSession();
-  const role = session?.user?.role;
+export default async function DashboardPage() {
+  const session = await getServerAuthSession();
+  if (!session?.user) {
+    redirect("/login");
+  }
 
-  const myRequests = api.request.listMine.useQuery(undefined, {
-    enabled: role === "RESIDENT"
-  });
-
-  const openRequests = api.request.listOpen.useQuery(undefined, {
-    enabled: role === "YOUTH" || role === "BUSINESS"
-  });
+  const role = session.user.role;
+  const [requestCount, openJobs] = await Promise.all([
+    prisma.serviceRequest.count({ where: { residentId: session.user.id } }),
+    prisma.deliveryJob.count({ where: { status: "OPEN" } })
+  ]);
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle>Role overview</CardTitle>
+          <CardTitle>Welcome</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-slate-600">
-            Signed in as <span className="font-semibold text-slate-900">{session?.user?.email ?? "Guest"}</span>
+            Signed in as <span className="font-semibold text-slate-900">{session.user.email}</span>
           </p>
-          <p className="mt-2 text-sm text-slate-600">Role: {role ?? "None"}</p>
+          <p className="mt-2 text-sm text-slate-600">Role: {role}</p>
         </CardContent>
       </Card>
 
       {role === "RESIDENT" && (
         <Card>
           <CardHeader>
-            <CardTitle>My request progress</CardTitle>
+            <CardTitle>My requests</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-600">
-              {myRequests.data?.length ?? 0} requests submitted.
-            </p>
+            <p className="text-sm text-slate-600">{requestCount} active requests submitted.</p>
           </CardContent>
         </Card>
       )}
 
-      {(role === "YOUTH" || role === "BUSINESS") && (
+      {role === "DRIVER" && (
         <Card>
           <CardHeader>
-            <CardTitle>Open requests</CardTitle>
+            <CardTitle>Open delivery jobs</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-600">
-              {openRequests.data?.length ?? 0} open requests available to claim.
-            </p>
+            <p className="text-sm text-slate-600">{openJobs} jobs waiting for a driver.</p>
           </CardContent>
         </Card>
       )}

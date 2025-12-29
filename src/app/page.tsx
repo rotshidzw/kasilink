@@ -1,50 +1,135 @@
 import Link from "next/link";
+import { ArrowUpRight, BadgeCheck, Clock, Package, ShieldCheck, Truck } from "lucide-react";
 
+import { prisma } from "@/server/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [openRequests, openJobs] = await Promise.all([
+    prisma.serviceRequest.count({ where: { status: "OPEN" } }),
+    prisma.deliveryJob.count({ where: { status: "OPEN" } })
+  ]);
+
   return (
-    <div className="flex flex-col gap-8">
-      <section className="rounded-2xl bg-slate-900 px-8 py-12 text-white">
-        <h1 className="text-3xl font-semibold">KasiLink</h1>
-        <p className="mt-3 max-w-2xl text-slate-200">
-          Connect residents, youth, and businesses to resolve service requests and organize cleanup events.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link href="/requests" className="rounded-md bg-white px-4 py-2 text-sm font-medium text-slate-900">
-            Submit a request
-          </Link>
-          <Link href="/events" className="rounded-md border border-white px-4 py-2 text-sm font-medium text-white">
-            Explore events
-          </Link>
+    <div className="flex flex-col gap-10">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-6 py-12 text-white shadow-xl md:px-12">
+        <div className="flex flex-col gap-6 md:max-w-3xl">
+          <Badge className="w-fit bg-white/10 text-white" variant="secondary">
+            Community-first delivery network
+          </Badge>
+          <h1 className="text-3xl font-semibold leading-tight md:text-4xl">
+            KasiLink connects residents, spaza shops, and drivers for trusted local service delivery.
+          </h1>
+          <p className="text-base text-slate-200 md:text-lg">
+            Launch service requests, coordinate restock days, and keep deliveries moving with real-time status updates.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/requests/new"
+              className={cn(
+                buttonVariants({ className: "bg-white text-slate-900 hover:bg-slate-100" })
+              )}
+            >
+              Create a service request
+            </Link>
+            <Link
+              href="/events"
+              className={cn(
+                buttonVariants({ variant: "outline", className: "border-white text-white hover:bg-white/10" })
+              )}
+            >
+              View restock days
+            </Link>
+          </div>
         </div>
+        <div className="absolute -right-8 -top-10 hidden h-40 w-40 rounded-full bg-white/10 blur-2xl md:block" />
       </section>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <section className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Open service requests</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-3xl font-semibold text-slate-900">{openRequests}</p>
+              <p className="text-sm text-slate-600">Residents waiting for water, gas, and handyman support.</p>
+              <Link href="/requests" className="inline-flex items-center text-sm font-medium text-slate-900">
+                Review requests <ArrowUpRight className="ml-1 h-4 w-4" />
+              </Link>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Available requests</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-3xl font-semibold text-slate-900">{openJobs}</p>
+              <p className="text-sm text-slate-600">Delivery jobs ready for drivers to accept now.</p>
+              <Link href="/driver" className="inline-flex items-center text-sm font-medium text-slate-900">
+                See driver board <ArrowUpRight className="ml-1 h-4 w-4" />
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>How KasiLink works</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {[
+              { icon: BadgeCheck, label: "Verified helpers", copy: "Track trusted shops and helpers." },
+              { icon: ShieldCheck, label: "Secure handoffs", copy: "OTP delivery confirmation on every job." },
+              { icon: Clock, label: "Live status", copy: "Residents receive updates instantly." }
+            ].map((item) => (
+              <div key={item.label} className="flex items-start gap-3">
+                <div className="mt-1 rounded-full bg-slate-100 p-2 text-slate-900">
+                  <item.icon className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                  <p className="text-sm text-slate-600">{item.copy}</p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-6 md:grid-cols-3">
         {[
           {
-            title: "Report",
-            body: "Residents can submit service requests with location and description."
+            title: "Service requests",
+            description: "Residents raise water, gas, bulk grocery, or handyman needs in seconds.",
+            icon: Package
           },
           {
-            title: "Claim",
-            body: "Youth and businesses claim open requests and update progress."
+            title: "Spaza inventory",
+            description: "Merchants keep stock levels updated and publish restock days.",
+            icon: BadgeCheck
           },
           {
-            title: "Gather",
-            body: "Coordinate community cleanup events and RSVP."
+            title: "Driver network",
+            description: "Drivers accept delivery jobs with verified OTP handoffs.",
+            icon: Truck
           }
-        ].map((item) => (
-          <Card key={item.title}>
+        ].map((feature) => (
+          <Card key={feature.title}>
             <CardHeader>
-              <CardTitle>{item.title}</CardTitle>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-900">
+                <feature.icon className="h-5 w-5" />
+              </div>
+              <CardTitle className="mt-4">{feature.title}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-slate-600">{item.body}</p>
+              <p className="text-sm text-slate-600">{feature.description}</p>
             </CardContent>
           </Card>
         ))}
-      </div>
+      </section>
     </div>
   );
 }

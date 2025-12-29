@@ -1,121 +1,139 @@
-"use client";
+import Link from "next/link";
+import { ClipboardList } from "lucide-react";
 
-import { useMemo, useState } from "react";
-import { useSession } from "next-auth/react";
-
-import { api } from "@/app/trpc";
-import { Button } from "@/components/ui/button";
+import { getServerAuthSession } from "@/server/auth";
+import { prisma } from "@/server/db";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { assignRequest } from "@/app/requests/actions";
+import { cn } from "@/lib/utils";
 
-const statusOptions = ["NEW", "CLAIMED", "IN_PROGRESS", "COMPLETED", "CANCELLED"] as const;
+function statusLabel(status: string) {
+  switch (status) {
+    case "OPEN":
+      return "Open";
+    case "ASSIGNED":
+      return "Assigned";
+    case "IN_PROGRESS":
+      return "In progress";
+    case "COMPLETED":
+      return "Completed";
+    case "CANCELLED":
+      return "Cancelled";
+    default:
+      return status;
+  }
+}
 
-export default function RequestsPage() {
-  const { data: session } = useSession();
-  const role = session?.user?.role;
-  const utils = api.useUtils();
+export default async function RequestsPage() {
+  const session = await getServerAuthSession();
 
-  const [type, setType] = useState("");
-  const [description, setDescription] = useState("");
-  const [address, setAddress] = useState("");
-
-  const createRequest = api.request.create.useMutation({
-    onSuccess: () => {
-      setType("");
-      setDescription("");
-      setAddress("");
-      void utils.request.listMine.invalidate();
-    }
-  });
-
-  const openRequests = api.request.listOpen.useQuery(undefined, {
-    enabled: role === "YOUTH" || role === "BUSINESS"
-  });
-  const myRequests = api.request.listMine.useQuery(undefined, {
-    enabled: role === "RESIDENT"
-  });
-
-  const claimRequest = api.request.claim.useMutation({
-    onSuccess: () => void utils.request.listOpen.invalidate()
-  });
-
-  const updateStatus = api.request.updateStatus.useMutation({
-    onSuccess: () => void utils.request.listOpen.invalidate()
-  });
-
-  const isResident = role === "RESIDENT";
-  const isResponder = role === "YOUTH" || role === "BUSINESS";
-
-  const requestList = useMemo(() => {
-    if (isResident) {
-      return myRequests.data ?? [];
-    }
-    return openRequests.data ?? [];
-  }, [isResident, myRequests.data, openRequests.data]);
-
-  return (
-    <div className="grid gap-6 lg:grid-cols-[1.1fr,1fr]">
+  if (!session?.user) {
+    return (
       <Card>
         <CardHeader>
-          <CardTitle>{isResident ? "Create a service request" : "Open service requests"}</CardTitle>
+          <CardTitle>Sign in to manage service requests</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {isResident && (
-            <>
-              <Input placeholder="Request type" value={type} onChange={(event) => setType(event.target.value)} />
-              <Input
-                placeholder="Description"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-              />
-              <Input placeholder="Address" value={address} onChange={(event) => setAddress(event.target.value)} />
-              <Button
-                className="w-full"
-                onClick={() => createRequest.mutate({ type, description, address })}
-                disabled={createRequest.isPending}
-              >
-                Submit request
-              </Button>
-            </>
-          )}
-          {!role && <p className="text-sm text-slate-600">Sign in to submit or claim requests.</p>}
-          {isResponder && <p className="text-sm text-slate-600">Claim a request to start helping.</p>}
+        <CardContent className="flex flex-col gap-4">
+          <p className="text-sm text-slate-600">
+            Residents can submit water, gas, bulk grocery, and handyman requests. Helpers can browse available work.
+          </p>
+          <Link href="/login" className={cn(buttonVariants({ className: "w-fit" }))}>
+            Sign in
+          </Link>
         </CardContent>
       </Card>
+    );
+  }
+
+  const isResident = session.user.role === "RESIDENT";
+
+  const requests = await prisma.serviceRequest.findMany({
+    where: isResident
+      ? { residentId: session.user.id }
+      : {
+          status: "OPEN"
+        },
+    include: {
+      category: true,
+      resident: true
+    },
+    orderBy: { createdAt: "desc" }
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Service requests</h1>
+          <p className="text-sm text-slate-600">
+            {isResident
+              ? "Track your requests and updates from helpers."
+              : "Browse open requests that need immediate attention."}
+          </p>
+        </div>
+        {isResident && (
+          <Link href="/requests/new" className={buttonVariants()}>
+            Create new request
+          </Link>
+        )}
+      </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>{isResident ? "My requests" : "Available requests"}</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>{isResident ? "My requests" : "Open requests"}</CardTitle>
+          <Badge variant="secondary">{requests.length} total</Badge>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {requestList.length === 0 && <p className="text-sm text-slate-600">No requests yet.</p>}
-          {requestList.map((request) => (
-            <div key={request.id} className="rounded-lg border border-slate-200 p-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium text-slate-900">{request.type}</h3>
-                <span className="text-xs font-semibold uppercase text-slate-500">{request.status}</span>
-              </div>
-              <p className="mt-2 text-sm text-slate-600">{request.description}</p>
-              <p className="mt-1 text-xs text-slate-500">{request.address}</p>
-              {isResponder && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" onClick={() => claimRequest.mutate({ requestId: request.id })}>
-                    Claim
-                  </Button>
-                  {statusOptions.map((status) => (
-                    <Button
-                      key={status}
-                      size="sm"
-                      variant="outline"
-                      onClick={() => updateStatus.mutate({ requestId: request.id, status })}
-                    >
-                      {status}
-                    </Button>
-                  ))}
-                </div>
-              )}
+        <CardContent>
+          {requests.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 py-10 text-center text-sm text-slate-600">
+              <ClipboardList className="h-6 w-6 text-slate-400" />
+              <p>No requests found yet.</p>
             </div>
-          ))}
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Request</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Status</TableHead>
+                  {!isResident && <TableHead>Resident</TableHead>}
+                  {!isResident && <TableHead />}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {requests.map((request) => {
+                  const action = assignRequest.bind(null, request.id);
+                  return (
+                    <TableRow key={request.id}>
+                      <TableCell>
+                        <div className="font-medium text-slate-900">{request.title}</div>
+                        <div className="text-xs text-slate-500">{request.address}</div>
+                      </TableCell>
+                      <TableCell>{request.category.name}</TableCell>
+                      <TableCell>
+                        <Badge variant={request.status === "OPEN" ? "default" : "secondary"}>
+                          {statusLabel(request.status)}
+                        </Badge>
+                      </TableCell>
+                      {!isResident && <TableCell>{request.resident.name ?? request.resident.email}</TableCell>}
+                      {!isResident && (
+                        <TableCell>
+                          <form action={action}>
+                            <Button type="submit" size="sm" disabled={request.status !== "OPEN"}>
+                              Assign to me
+                            </Button>
+                          </form>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
