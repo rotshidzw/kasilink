@@ -54,7 +54,7 @@ model User {
   id             String          @id @default(cuid())
   name           String?
   email          String          @unique
-  hashedPassword String
+  hashedPassword String?
   role           Role            @default(RESIDENT)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt

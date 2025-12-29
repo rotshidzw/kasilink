@@ -8,49 +8,48 @@ import { prisma } from "@/server/db";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8)
+  password: z.string().min(8),
 });
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
-  session: {
-    strategy: "jwt"
-  },
+  session: { strategy: "jwt" },
   providers: [
     CredentialsProvider({
       name: "Email",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         const parsed = credentialsSchema.safeParse(credentials);
-        if (!parsed.success) {
-          return null;
-        }
+        if (!parsed.success) return null;
 
-        try {
-          const user = await prisma.user.findUnique({
-            where: { email: parsed.data.email }
-          });
+        const user = await prisma.user.findUnique({
+          where: { email: parsed.data.email },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            hashedPassword: true,
+          },
+        });
 
-          if (!user) {
-            return null;
-          }
+        if (!user?.hashedPassword) return null;
 
-          const isValid = await bcrypt.compare(parsed.data.password, user.hashedPassword);
-          if (!isValid) {
-            return null;
-          }
+        const ok = await bcrypt.compare(parsed.data.password, user.hashedPassword);
+        if (!ok) return null;
 
-          const { hashedPassword, ...safeUser } = user;
-          return safeUser;
-        } catch (error) {
-          console.error("Credentials sign-in failed. Check DATABASE_URL and database status.", error);
-          return null;
-        }
-      }
-    })
+        // ✅ return user without hashedPassword
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        };
+      },
+    }),
   ],
   callbacks: {
     async jwt({ token, user }) {
@@ -63,14 +62,12 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as typeof session.user.role;
+        session.user.role = token.role as any;
       }
       return session;
-    }
+    },
   },
-  pages: {
-    signIn: "/login"
-  }
+  pages: { signIn: "/login" },
 };
 
 export const getServerAuthSession = () => getServerSession(authOptions);
