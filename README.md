@@ -1,19 +1,19 @@
 # KasiLink
 
-KasiLink is a full-stack T3-style MVP built with Next.js App Router, tRPC, Prisma, NextAuth, Tailwind, and shadcn/ui.
+KasiLink is a community-based service + delivery platform built with Next.js App Router, Prisma, NextAuth, Tailwind, and shadcn/ui.
 
 ## Features
-- Role-based flows: RESIDENT, BUSINESS, YOUTH, ADMIN.
-- Service requests: residents submit, youth/business claim and update status.
-- Cleanup events: create, list, RSVP, and upload proof images.
-- Admin dashboard with stats.
-- Seeded demo data.
+- Role-based dashboards for residents, spaza shops, drivers, and admins.
+- Service requests (water, gas, bulk grocery, handyman) with status tracking.
+- Spaza inventory management and restock day announcements.
+- Delivery jobs with OTP confirmation.
+- Seeded demo data and modern dashboard UI.
 
 ## Getting Started
 
 ### 1. Start Postgres
 ```bash
-docker-compose up -d
+npm run db:up
 ```
 
 ### 2. Install dependencies
@@ -24,7 +24,7 @@ npm install
 ### 3. Configure environment variables
 Create a `.env` file in the repo root:
 ```bash
-DATABASE_URL="postgresql://kasilink:kasilink@localhost:5432/kasilink"
+DATABASE_URL="postgresql://kasilink:kasilink@127.0.0.1:5433/kasilink?schema=public"
 NEXTAUTH_SECRET="dev-secret"
 NEXTAUTH_URL="http://localhost:3000"
 ```
@@ -41,14 +41,25 @@ npm run dev
 ```
 
 ## Demo Accounts
+All demo users share the password `Password123!`:
 - `resident@kasilink.local`
-- `youth@kasilink.local`
 - `business@kasilink.local`
+- `driver@kasilink.local`
 - `admin@kasilink.local`
 
-## Proof Image Storage
-Proof uploads are handled by a storage provider abstraction in `src/server/providers/storage.ts`. The default is `LocalStorageProvider`, which saves files to `/public/uploads` and returns a public URL. A `HuaweiOBSProvider` stub is included for future integration.
+## Prisma notes (Windows)
+If Prisma generate or migrate fails on Windows with EPERM errors, stop the Next.js dev server before running:
+```bash
+npm run prisma:generate
+npm run prisma:migrate
+```
+Then restart the dev server.
+
+## Useful scripts
+- `npm run db:up` / `npm run db:down`
+- `npm run prisma:generate`
+- `npm run prisma:migrate`
+- `npm run seed`
 
 ## Troubleshooting
-**Login fails with `CredentialsSignin`**  
-Make sure Postgres is running (`docker-compose up -d`), your `.env` `DATABASE_URL` matches the database credentials, and run `npm run prisma:migrate` + `npm run seed` before signing in.
+If sign-in fails, confirm Postgres is running, run migrations + seed, and verify your `DATABASE_URL` value.

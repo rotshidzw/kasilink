@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { type NextAuthOptions, getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -6,15 +7,9 @@ import { z } from "zod";
 import { prisma } from "@/server/db";
 
 const credentialsSchema = z.object({
-  email: z.string().email()
+  email: z.string().email(),
+  password: z.string().min(8)
 });
-
-const demoRoleByEmail = new Map([
-  ["resident@kasilink.local", "RESIDENT"],
-  ["youth@kasilink.local", "YOUTH"],
-  ["business@kasilink.local", "BUSINESS"],
-  ["admin@kasilink.local", "ADMIN"]
-]);
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -25,7 +20,8 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "Email",
       credentials: {
-        email: { label: "Email", type: "email" }
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
         const parsed = credentialsSchema.safeParse(credentials);
@@ -34,18 +30,21 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const role = demoRoleByEmail.get(parsed.data.email) ?? "RESIDENT";
-          const user = await prisma.user.upsert({
-            where: { email: parsed.data.email },
-            update: {},
-            create: {
-              email: parsed.data.email,
-              name: parsed.data.email.split("@")[0],
-              role
-            }
+          const user = await prisma.user.findUnique({
+            where: { email: parsed.data.email }
           });
 
-          return user;
+          if (!user) {
+            return null;
+          }
+
+          const isValid = await bcrypt.compare(parsed.data.password, user.hashedPassword);
+          if (!isValid) {
+            return null;
+          }
+
+          const { hashedPassword, ...safeUser } = user;
+          return safeUser;
         } catch (error) {
           console.error("Credentials sign-in failed. Check DATABASE_URL and database status.", error);
           return null;
