@@ -7,7 +7,6 @@ import { PackagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { createProduct, updateInventory } from "@/app/shop/actions";
@@ -44,32 +43,31 @@ export default function ShopDashboard({ shop, products }: ShopDashboardProps) {
           <h1 className="text-2xl font-semibold text-slate-900">{shop.name}</h1>
           <p className="text-sm text-slate-600">{shop.description}</p>
         </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <PackagePlus className="h-4 w-4" />
-              Add product
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add a new product</DialogTitle>
-            </DialogHeader>
-            <form action={createProduct} className="space-y-3">
-              <Input name="name" placeholder="Product name" required />
-              <Input name="description" placeholder="Short description" required />
-              <div className="grid gap-3 md:grid-cols-2">
-                <Input name="price" type="number" step="0.01" placeholder="Price" required />
-                <Input name="unit" placeholder="Unit (kg, pack)" required />
-              </div>
-              <Input name="quantity" type="number" placeholder="Starting quantity" required />
-              <Button type="submit" className="w-full">
-                Save product
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <PackagePlus className="h-4 w-4" />
+          Add a new product below
+        </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Add a new product</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form action={createProduct} className="space-y-3">
+            <Input name="name" placeholder="Product name" required />
+            <Input name="description" placeholder="Short description" required />
+            <div className="grid gap-3 md:grid-cols-2">
+              <Input name="price" type="number" step="0.01" placeholder="Price" required />
+              <Input name="unit" placeholder="Unit (kg, pack)" required />
+            </div>
+            <Input name="quantity" type="number" placeholder="Starting quantity" required />
+            <Button type="submit" className="w-full">
+              Save product
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-3">
         {[

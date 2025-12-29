@@ -2,7 +2,6 @@ import { CalendarDays, Megaphone } from "lucide-react";
 
 import { prisma } from "@/server/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -21,80 +20,67 @@ export default async function EventsPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="restock">
-        <TabsList>
-          <TabsTrigger value="restock">Restock calendar</TabsTrigger>
-          <TabsTrigger value="community">Community announcements</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="restock">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <CalendarDays className="h-5 w-5" />
-                Upcoming restock days
-              </CardTitle>
-              <Badge variant="secondary">{restockAnnouncements.length} scheduled</Badge>
-            </CardHeader>
-            <CardContent>
-              {restockAnnouncements.length === 0 ? (
-                <p className="text-sm text-slate-600">No restock days announced yet.</p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Event</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Details</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {restockAnnouncements.map((announcement) => (
-                      <TableRow key={announcement.id}>
-                        <TableCell className="font-medium text-slate-900">{announcement.title}</TableCell>
-                        <TableCell>
-                          {announcement.startsAt
-                            ? new Date(announcement.startsAt).toLocaleDateString()
-                            : "TBA"}
-                        </TableCell>
-                        <TableCell>{announcement.body}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="community">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Megaphone className="h-5 w-5" />
-                Community highlights
-              </CardTitle>
-              <Badge variant="secondary">{communityAnnouncements.length} updates</Badge>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {communityAnnouncements.length === 0 && <p className="text-sm text-slate-600">No updates yet.</p>}
-              {communityAnnouncements.map((announcement) => (
-                <div key={announcement.id} className="rounded-lg border border-slate-200 p-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-base font-semibold text-slate-900">{announcement.title}</h3>
-                    <Badge variant="outline">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <CalendarDays className="h-5 w-5" />
+            Upcoming restock days
+          </CardTitle>
+          <Badge variant="secondary">{restockAnnouncements.length} scheduled</Badge>
+        </CardHeader>
+        <CardContent>
+          {restockAnnouncements.length === 0 ? (
+            <p className="text-sm text-slate-600">No restock days announced yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Event</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Details</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {restockAnnouncements.map((announcement) => (
+                  <TableRow key={announcement.id}>
+                    <TableCell className="font-medium text-slate-900">{announcement.title}</TableCell>
+                    <TableCell>
                       {announcement.startsAt
                         ? new Date(announcement.startsAt).toLocaleDateString()
-                        : "Ongoing"}
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-slate-600">{announcement.body}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                        : "TBA"}
+                    </TableCell>
+                    <TableCell>{announcement.body}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Megaphone className="h-5 w-5" />
+            Community highlights
+          </CardTitle>
+          <Badge variant="secondary">{communityAnnouncements.length} updates</Badge>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {communityAnnouncements.length === 0 && <p className="text-sm text-slate-600">No updates yet.</p>}
+          {communityAnnouncements.map((announcement) => (
+            <div key={announcement.id} className="rounded-lg border border-slate-200 p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-semibold text-slate-900">{announcement.title}</h3>
+                <Badge variant="outline">
+                  {announcement.startsAt ? new Date(announcement.startsAt).toLocaleDateString() : "Ongoing"}
+                </Badge>
+              </div>
+              <p className="mt-2 text-sm text-slate-600">{announcement.body}</p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }

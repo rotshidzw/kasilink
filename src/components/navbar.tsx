@@ -2,20 +2,9 @@
 
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
-import { Menu, Sparkles, UserCircle2 } from "lucide-react";
+import { Menu, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuCheckboxItem
-} from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useLiteMode } from "@/components/lite-mode-toggle";
 
 export function Navbar() {
@@ -51,27 +40,15 @@ export function Navbar() {
         </nav>
         <div className="flex items-center gap-3">
           {session?.user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <UserCircle2 className="h-4 w-4" />
-                  {session.user.name ?? session.user.email}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel className="space-y-1">
-                  <div className="text-xs text-slate-500">Signed in as</div>
-                  <div className="text-sm font-medium text-slate-900">{session.user.email}</div>
-                  {role && <Badge variant="secondary">{role}</Badge>}
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuCheckboxItem checked={enabled} onCheckedChange={toggle}>
-                  Lite mode (low data)
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut()}>Sign out</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="hidden items-center gap-3 md:flex">
+              <div className="text-sm text-slate-600">{session.user.email}</div>
+              <Button variant="outline" size="sm" onClick={toggle}>
+                Lite mode: {enabled ? "On" : "Off"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => signOut()}>
+                Sign out
+              </Button>
+            </div>
           ) : (
             <Link
               href="/login"
@@ -80,16 +57,13 @@ export function Navbar() {
               Sign in
             </Link>
           )}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="md:hidden">
+          <details className="relative md:hidden">
+            <summary className="list-none">
+              <Button variant="outline" size="icon">
                 <Menu className="h-4 w-4" />
               </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="flex flex-col gap-6">
-              <SheetHeader>
-                <SheetTitle>Navigation</SheetTitle>
-              </SheetHeader>
+            </summary>
+            <div className="absolute right-0 mt-2 w-56 rounded-lg border border-slate-200 bg-white p-4 shadow-lg">
               <div className="flex flex-col gap-3">
                 {navLinks
                   .filter((link) => !link.roles || (role && link.roles.includes(role)))
@@ -98,12 +72,19 @@ export function Navbar() {
                       {link.label}
                     </Link>
                   ))}
+                {session?.user && (
+                  <>
+                    <button type="button" className="text-left text-sm text-slate-700" onClick={toggle}>
+                      Lite mode: {enabled ? "On" : "Off"}
+                    </button>
+                    <button type="button" className="text-left text-sm text-slate-700" onClick={() => signOut()}>
+                      Sign out
+                    </button>
+                  </>
+                )}
               </div>
-              <div className="mt-auto text-xs text-slate-500">
-                Lite mode: {enabled ? "On" : "Off"}
-              </div>
-            </SheetContent>
-          </Sheet>
+            </div>
+          </details>
         </div>
       </div>
     </header>

@@ -7,7 +7,6 @@ import { ArrowRight, MapPin, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createServiceRequest, type RequestState } from "@/app/requests/actions";
 
 const initialState: RequestState = {};
@@ -37,14 +36,23 @@ export default function RequestWizard({ categories, addresses }: RequestWizardPr
           <CardTitle>Create a service request</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs value={step} onValueChange={setStep}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="category">1. Category</TabsTrigger>
-              <TabsTrigger value="details">2. Details</TabsTrigger>
-              <TabsTrigger value="address">3. Address</TabsTrigger>
-            </TabsList>
-            <form action={formAction} className="mt-6 space-y-4">
-              <TabsContent value="category" className="space-y-4">
+          <div className="grid w-full grid-cols-3 gap-2 text-xs font-semibold text-slate-500">
+            {["category", "details", "address"].map((label, index) => (
+              <button
+                key={label}
+                type="button"
+                className={`rounded-md px-3 py-2 text-center uppercase ${
+                  step === label ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"
+                }`}
+                onClick={() => setStep(label)}
+              >
+                {index + 1}. {label}
+              </button>
+            ))}
+          </div>
+          <form action={formAction} className="mt-6 space-y-4">
+            {step === "category" && (
+              <div className="space-y-4">
                 <label className="text-sm font-medium text-slate-700">Select service category</label>
                 <select
                   name="categoryId"
@@ -61,9 +69,11 @@ export default function RequestWizard({ categories, addresses }: RequestWizardPr
                 <Button type="button" className="w-full" onClick={() => setStep("details")}>
                   Continue to details
                 </Button>
-              </TabsContent>
+              </div>
+            )}
 
-              <TabsContent value="details" className="space-y-4">
+            {step === "details" && (
+              <div className="space-y-4">
                 <Input
                   name="title"
                   placeholder="Request title"
@@ -86,9 +96,11 @@ export default function RequestWizard({ categories, addresses }: RequestWizardPr
                     Continue
                   </Button>
                 </div>
-              </TabsContent>
+              </div>
+            )}
 
-              <TabsContent value="address" className="space-y-4">
+            {step === "address" && (
+              <div className="space-y-4">
                 <label className="text-sm font-medium text-slate-700">Delivery address</label>
                 <select
                   className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
@@ -123,9 +135,9 @@ export default function RequestWizard({ categories, addresses }: RequestWizardPr
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
-              </TabsContent>
-            </form>
-          </Tabs>
+              </div>
+            )}
+          </form>
         </CardContent>
       </Card>
 
