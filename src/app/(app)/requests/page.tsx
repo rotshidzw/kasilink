@@ -42,6 +42,7 @@ function statusLabel(status: string) {
 
 export default async function RequestsPage() {
   const session = await getServerAuthSession();
+  const assistedOrdersEnabled = process.env.ASSISTED_ORDERS_ENABLED === "true";
 
   if (!session?.user) {
     return (
@@ -76,7 +77,7 @@ export default async function RequestsPage() {
     include: {
       category: true,
       resident: true,
-      contact: true
+      ...(assistedOrdersEnabled ? { contact: true } : {})
     },
     orderBy: { createdAt: "desc" }
   });

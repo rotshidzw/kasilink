@@ -10,6 +10,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const assistedOrdersEnabled = process.env.ASSISTED_ORDERS_ENABLED === "true";
+
   const formData = await request.formData();
   const message = formData.get("message");
 
@@ -19,7 +21,10 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   const serviceRequest = await prisma.serviceRequest.findUnique({
     where: { id: params.id },
-    include: { resident: { include: { profile: true } }, contact: true }
+    include: {
+      resident: { include: { profile: true } },
+      ...(assistedOrdersEnabled ? { contact: true } : {})
+    }
   });
 
   const phone = serviceRequest?.resident?.profile?.phone ?? serviceRequest?.contact?.phone;

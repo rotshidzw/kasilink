@@ -25,6 +25,8 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
+  const assistedOrdersEnabled = process.env.ASSISTED_ORDERS_ENABLED === "true";
+
   const [requestCount, orderCount, jobCount, userCount] = await Promise.all([
     prisma.serviceRequest.count(),
     prisma.order.count(),
@@ -34,7 +36,11 @@ export default async function AdminPage() {
 
   const [requests, orders, jobs, users, stores, drivers, categories, products] = await Promise.all([
     prisma.serviceRequest.findMany({
-      include: { resident: true, category: true, contact: true },
+      include: {
+        resident: true,
+        category: true,
+        ...(assistedOrdersEnabled ? { contact: true } : {})
+      },
       orderBy: { createdAt: "desc" },
       take: 5
     }),
