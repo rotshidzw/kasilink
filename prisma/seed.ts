@@ -23,12 +23,15 @@ async function main() {
     prisma.driverProfile.deleteMany(),
     prisma.review.deleteMany(),
     prisma.deliveryJob.deleteMany(),
+    prisma.callbackTicket.deleteMany(),
+    prisma.voiceNoteRequest.deleteMany(),
     prisma.orderItem.deleteMany(),
     prisma.order.deleteMany(),
     prisma.inventory.deleteMany(),
     prisma.product.deleteMany(),
     prisma.shop.deleteMany(),
     prisma.serviceRequest.deleteMany(),
+    prisma.assistedContact.deleteMany(),
     prisma.serviceCategory.deleteMany(),
     prisma.announcement.deleteMany(),
     prisma.address.deleteMany(),
@@ -105,6 +108,16 @@ async function main() {
   });
 
   const categories = await prisma.serviceCategory.findMany();
+
+  const assistedContact = await prisma.assistedContact.create({
+    data: {
+      name: "Gogo Nandi",
+      phone: "+27 82 777 2211",
+      area: "Alexandra",
+      addressNote: "Corner of 3rd Ave and Main Street",
+      createdById: admin.id
+    }
+  });
 
   const shop = await prisma.shop.create({
     data: {
@@ -211,6 +224,26 @@ async function main() {
         create: {
           type: RequestEventType.SUBMITTED,
           message: "Seeded request submitted."
+        }
+      }
+    }
+  });
+
+  await prisma.serviceRequest.create({
+    data: {
+      title: "Assisted gas refill",
+      description: "Caller needs a 9kg gas refill delivered today.",
+      address: "3rd Ave · Alexandra",
+      status: ServiceRequestStatus.SUBMITTED,
+      contactId: assistedContact.id,
+      createdByStaffId: admin.id,
+      verifiedByCall: true,
+      categoryId: categories.find((category) => category.name === "Gas")?.id ?? categories[1]!.id,
+      events: {
+        create: {
+          type: RequestEventType.SUBMITTED,
+          message: "Assisted request submitted by call center.",
+          actorId: admin.id
         }
       }
     }
