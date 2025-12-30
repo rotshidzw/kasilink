@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ClipboardList } from "lucide-react";
+import { RequestStatus } from "@prisma/client";
 
 import { getServerAuthSession } from "@/server/auth";
 import { prisma } from "@/server/db";
@@ -64,7 +65,7 @@ export default async function RequestsPage() {
     where: isResident
       ? { residentId: session.user.id }
       : {
-          status: "SUBMITTED"
+          status: RequestStatus.SUBMITTED
         },
     include: {
       category: true,

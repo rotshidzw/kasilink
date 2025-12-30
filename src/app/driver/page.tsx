@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
+import { DeliveryJobStatus } from "@prisma/client";
 
 import { getServerAuthSession } from "@/server/auth";
 import { prisma } from "@/server/db";
@@ -18,7 +19,7 @@ export default async function DriverPage() {
 
   const jobs = await prisma.deliveryJob.findMany({
     where: {
-      OR: [{ status: "OPEN" }, { driverId: session.user.id }]
+      OR: [{ status: DeliveryJobStatus.OPEN }, { driverId: session.user.id }]
     },
     include: {
       order: { include: { shop: true } },

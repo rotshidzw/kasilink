@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Bell, Calendar, ClipboardList, Heart, Store, Ticket, Truck } from "lucide-react";
+import { DeliveryJobStatus } from "@prisma/client";
 
 import { getServerAuthSession } from "@/server/auth";
 import { prisma } from "@/server/db";
@@ -26,7 +27,7 @@ export default async function DashboardPage() {
     }),
     prisma.announcement.findMany({ orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }], take: 3 }),
     prisma.shop.findMany({ orderBy: { name: "asc" }, take: 3 }),
-    prisma.deliveryJob.count({ where: { status: "OPEN" } }),
+    prisma.deliveryJob.count({ where: { status: DeliveryJobStatus.OPEN } }),
     prisma.favorite.findMany({ where: { userId: session.user.id }, orderBy: { createdAt: "desc" }, take: 3 }),
     prisma.orderHistory.findMany({
       where: { userId: session.user.id },
