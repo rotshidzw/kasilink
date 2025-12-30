@@ -25,6 +25,9 @@ enum ServiceRequestStatus {
   COMPLETED
   CANCELLED
   REJECTED
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
 }
 
 enum RequestEventType {
@@ -87,8 +90,8 @@ model User {
   addresses      Address[]
   shops          Shop[]
   requests       ServiceRequest[] @relation("ResidentRequests")
-  assignedDriverRequests ServiceRequest[] @relation("DriverAssignments")
-  assignedBusinessRequests ServiceRequest[] @relation("BusinessAssignments")
+  assignedDriverRequests ServiceRequest[] @relation("AssignedDriver")
+  assignedBusinessRequests ServiceRequest[] @relation("AssignedBusiness")
   orders         Order[]
   deliveryJobs   DeliveryJob[]    @relation("DriverJobs")
   reviewsWritten Review[]         @relation("ReviewsWritten")
@@ -205,8 +208,8 @@ model ServiceRequest {
   updatedById String?
   categoryId  String
   resident    User                 @relation("ResidentRequests", fields: [residentId], references: [id], onDelete: Cascade)
-  assignedDriver  User?                @relation("DriverAssignments", fields: [assignedDriverId], references: [id])
-  assignedBusiness User?               @relation("BusinessAssignments", fields: [assignedBusinessId], references: [id])
+  assignedDriver  User?                @relation("AssignedDriver", fields: [assignedDriverId], references: [id])
+  assignedBusiness User?               @relation("AssignedBusiness", fields: [assignedBusinessId], references: [id])
   updatedBy User?                      @relation("RequestUpdatedBy", fields: [updatedById], references: [id])
   category    ServiceCategory      @relation(fields: [categoryId], references: [id])
   deliveryJob DeliveryJob?
@@ -369,14 +372,14 @@ model Review {
 
 model Announcement {
   id          String   @id @default(cuid())
-  authorId    String
+  authorId    String?
   title       String
   body        String
   category    String
   isPinned    Boolean  @default(false)
   createdAt   DateTime @default(now())
   expiresAt   DateTime?
-  author      User     @relation("AnnouncementAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  author      User?     @relation("AnnouncementAuthor", fields: [authorId], references: [id], onDelete: SetNull)
 }
 
 model Account {
