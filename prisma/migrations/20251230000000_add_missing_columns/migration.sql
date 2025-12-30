@@ -1,21 +1,3 @@
--- Add new enum values safely
-DO $$
-BEGIN
-  ALTER TYPE "ServiceRequestStatus" ADD VALUE IF NOT EXISTS 'DRAFT';
-  ALTER TYPE "ServiceRequestStatus" ADD VALUE IF NOT EXISTS 'SUBMITTED';
-  ALTER TYPE "ServiceRequestStatus" ADD VALUE IF NOT EXISTS 'MATCHED';
-  ALTER TYPE "ServiceRequestStatus" ADD VALUE IF NOT EXISTS 'ACCEPTED';
-  ALTER TYPE "ServiceRequestStatus" ADD VALUE IF NOT EXISTS 'PICKED_UP';
-  ALTER TYPE "ServiceRequestStatus" ADD VALUE IF NOT EXISTS 'EN_ROUTE';
-  ALTER TYPE "ServiceRequestStatus" ADD VALUE IF NOT EXISTS 'DELIVERED';
-  ALTER TYPE "ServiceRequestStatus" ADD VALUE IF NOT EXISTS 'COMPLETED';
-  ALTER TYPE "ServiceRequestStatus" ADD VALUE IF NOT EXISTS 'CANCELLED';
-  ALTER TYPE "ServiceRequestStatus" ADD VALUE IF NOT EXISTS 'REJECTED';
-  ALTER TYPE "ServiceRequestStatus" ADD VALUE IF NOT EXISTS 'OPEN';
-  ALTER TYPE "ServiceRequestStatus" ADD VALUE IF NOT EXISTS 'ASSIGNED';
-  ALTER TYPE "ServiceRequestStatus" ADD VALUE IF NOT EXISTS 'IN_PROGRESS';
-END $$;
-
 -- ServiceRequest columns
 ALTER TABLE "ServiceRequest"
   ADD COLUMN IF NOT EXISTS "assignedDriverId" TEXT,
@@ -28,7 +10,8 @@ ALTER TABLE "ServiceRequest"
   ADD COLUMN IF NOT EXISTS "deliveryFeeCents" INTEGER,
   ADD COLUMN IF NOT EXISTS "proofOfDeliveryUrl" TEXT,
   ADD COLUMN IF NOT EXISTS "deliveryOtp" TEXT,
-  ADD COLUMN IF NOT EXISTS "updatedById" TEXT;
+  ADD COLUMN IF NOT EXISTS "updatedById" TEXT,
+  ADD COLUMN IF NOT EXISTS "contactId" TEXT;
 
 ALTER TABLE "ServiceRequest"
   ALTER COLUMN "status" SET DEFAULT 'DRAFT';
@@ -60,6 +43,38 @@ BEGIN
   ALTER TABLE "ServiceRequest"
     ADD CONSTRAINT "ServiceRequest_updatedById_fkey"
     FOREIGN KEY ("updatedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+-- Assisted contacts
+CREATE TABLE IF NOT EXISTS "AssistedContact" (
+  "id" TEXT NOT NULL,
+  "name" TEXT NOT NULL,
+  "phone" TEXT NOT NULL,
+  "area" TEXT NOT NULL,
+  "addressNote" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  "createdById" TEXT,
+
+  CONSTRAINT "AssistedContact_pkey" PRIMARY KEY ("id")
+);
+
+DO $$
+BEGIN
+  ALTER TABLE "AssistedContact"
+    ADD CONSTRAINT "AssistedContact_createdById_fkey"
+    FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER TABLE "ServiceRequest"
+    ADD CONSTRAINT "ServiceRequest_contactId_fkey"
+    FOREIGN KEY ("contactId") REFERENCES "AssistedContact"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;

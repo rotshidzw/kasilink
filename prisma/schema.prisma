@@ -26,9 +26,6 @@ enum ServiceRequestStatus {
   COMPLETED
   CANCELLED
   REJECTED
-  OPEN
-  ASSIGNED
-  IN_PROGRESS
 }
 
 enum RequestEventType {
