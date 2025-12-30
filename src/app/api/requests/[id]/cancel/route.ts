@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { RequestEventType, RequestStatus } from "@prisma/client";
+import { RequestEventType, ServiceRequestStatus } from "@prisma/client";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
 
 const cancellableStatuses = new Set([
-  RequestStatus.DRAFT,
-  RequestStatus.SUBMITTED,
-  RequestStatus.MATCHED,
-  RequestStatus.ACCEPTED
+  ServiceRequestStatus.DRAFT,
+  ServiceRequestStatus.SUBMITTED,
+  ServiceRequestStatus.MATCHED,
+  ServiceRequestStatus.ACCEPTED
 ]);
 
 export async function POST(_request: Request, { params }: { params: { id: string } }) {
@@ -37,7 +37,7 @@ export async function POST(_request: Request, { params }: { params: { id: string
   await prisma.serviceRequest.update({
     where: { id: params.id },
     data: {
-      status: RequestStatus.CANCELLED,
+      status: ServiceRequestStatus.CANCELLED,
       cancelledAt: new Date(),
       updatedById: session.user.id,
       events: {

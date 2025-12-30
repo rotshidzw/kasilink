@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { RequestEventType, RequestStatus } from "@prisma/client";
+import { RequestEventType, ServiceRequestStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -58,7 +58,7 @@ export async function createServiceRequest(prevState: RequestState, formData: Fo
       address: `${parsed.data.addressLabel} · ${parsed.data.addressLine1}`,
       categoryId: parsed.data.categoryId,
       residentId: session.user.id,
-      status: RequestStatus.SUBMITTED,
+      status: ServiceRequestStatus.SUBMITTED,
       events: {
         create: {
           type: RequestEventType.SUBMITTED,
@@ -90,7 +90,7 @@ export async function assignRequest(requestId: string) {
   await prisma.serviceRequest.update({
     where: { id: requestId },
     data: {
-      status: RequestStatus.MATCHED,
+      status: ServiceRequestStatus.MATCHED,
       assignedAt: new Date(),
       ...assignmentData,
       events: {

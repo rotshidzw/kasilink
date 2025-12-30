@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
-import { RequestEventType, RequestStatus } from "@prisma/client";
+import { RequestEventType, ServiceRequestStatus } from "@prisma/client";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
 
-const transitions: Record<RequestStatus, RequestStatus[]> = {
-  DRAFT: [RequestStatus.SUBMITTED],
-  SUBMITTED: [RequestStatus.MATCHED, RequestStatus.CANCELLED],
-  MATCHED: [RequestStatus.ACCEPTED, RequestStatus.CANCELLED],
-  ACCEPTED: [RequestStatus.PICKED_UP, RequestStatus.CANCELLED],
-  PICKED_UP: [RequestStatus.EN_ROUTE],
-  EN_ROUTE: [RequestStatus.DELIVERED],
-  DELIVERED: [RequestStatus.COMPLETED],
+const transitions: Record<ServiceRequestStatus, ServiceRequestStatus[]> = {
+  DRAFT: [ServiceRequestStatus.SUBMITTED],
+  SUBMITTED: [ServiceRequestStatus.MATCHED, ServiceRequestStatus.CANCELLED],
+  MATCHED: [ServiceRequestStatus.ACCEPTED, ServiceRequestStatus.CANCELLED],
+  ACCEPTED: [ServiceRequestStatus.PICKED_UP, ServiceRequestStatus.CANCELLED],
+  PICKED_UP: [ServiceRequestStatus.EN_ROUTE],
+  EN_ROUTE: [ServiceRequestStatus.DELIVERED],
+  DELIVERED: [ServiceRequestStatus.COMPLETED],
   COMPLETED: [],
   CANCELLED: [],
   REJECTED: []
@@ -23,16 +23,16 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let newStatus: RequestStatus | undefined;
+  let newStatus: ServiceRequestStatus | undefined;
   const contentType = request.headers.get("content-type") ?? "";
   if (contentType.includes("application/json")) {
     const body = await request.json().catch(() => null);
-    newStatus = body?.newStatus as RequestStatus | undefined;
+    newStatus = body?.newStatus as ServiceRequestStatus | undefined;
   } else {
     const formData = await request.formData();
-    newStatus = (formData.get("newStatus") as RequestStatus | null) ?? undefined;
+    newStatus = (formData.get("newStatus") as ServiceRequestStatus | null) ?? undefined;
   }
-  if (!newStatus || !Object.values(RequestStatus).includes(newStatus)) {
+  if (!newStatus || !Object.values(ServiceRequestStatus).includes(newStatus)) {
     return NextResponse.json({ error: "Invalid status." }, { status: 400 });
   }
 
@@ -49,14 +49,14 @@ export async function POST(request: Request, { params }: { params: { id: string 
   const isResident =
     session.user.role === "RESIDENT" &&
     serviceRequest.residentId === session.user.id &&
-    newStatus === RequestStatus.COMPLETED &&
-    serviceRequest.status === RequestStatus.DELIVERED;
+    newStatus === ServiceRequestStatus.COMPLETED &&
+    serviceRequest.status === ServiceRequestStatus.DELIVERED;
 
   if (!isAdmin && !isDriver && !isResident) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  if (isDriver && newStatus === RequestStatus.COMPLETED) {
+  if (isDriver && newStatus === ServiceRequestStatus.COMPLETED) {
     return NextResponse.json({ error: "Drivers cannot complete requests." }, { status: 403 });
   }
 
@@ -66,10 +66,10 @@ export async function POST(request: Request, { params }: { params: { id: string 
   }
 
   const updates: Record<string, Date> = {};
-  if (newStatus === RequestStatus.DELIVERED) {
+  if (newStatus === ServiceRequestStatus.DELIVERED) {
     updates.deliveredAt = new Date();
   }
-  if (newStatus === RequestStatus.COMPLETED) {
+  if (newStatus === ServiceRequestStatus.COMPLETED) {
     updates.completedAt = new Date();
   }
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { RequestEventType, RequestStatus } from "@prisma/client";
+import { RequestEventType, ServiceRequestStatus } from "@prisma/client";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
@@ -18,14 +18,14 @@ export async function POST(_request: Request, { params }: { params: { id: string
     return NextResponse.json({ error: "Request not found" }, { status: 404 });
   }
 
-  if (serviceRequest.status !== RequestStatus.DRAFT) {
+  if (serviceRequest.status !== ServiceRequestStatus.DRAFT) {
     return NextResponse.json({ error: "Request already submitted." }, { status: 400 });
   }
 
   await prisma.serviceRequest.update({
     where: { id: params.id },
     data: {
-      status: RequestStatus.SUBMITTED,
+      status: ServiceRequestStatus.SUBMITTED,
       updatedById: session.user.id,
       events: {
         create: {

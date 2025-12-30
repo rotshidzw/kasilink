@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DeliveryJobStatus, RequestEventType, RequestStatus } from "@prisma/client";
+import { DeliveryJobStatus, RequestEventType, ServiceRequestStatus } from "@prisma/client";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
@@ -41,7 +41,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     data: {
       assignedDriverId: driverId,
       assignedAt: new Date(),
-      status: RequestStatus.MATCHED,
+      status: ServiceRequestStatus.MATCHED,
       updatedById: session.user.id,
       deliveryJob: {
         upsert: {

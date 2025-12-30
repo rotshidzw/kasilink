@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { RequestEventType, RequestStatus } from "@prisma/client";
+import { RequestEventType, ServiceRequestStatus } from "@prisma/client";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
@@ -32,7 +32,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return NextResponse.json({ error: "Request not found" }, { status: 404 });
   }
 
-  if (![RequestStatus.DELIVERED, RequestStatus.COMPLETED].includes(serviceRequest.status)) {
+  if (![ServiceRequestStatus.DELIVERED, ServiceRequestStatus.COMPLETED].includes(serviceRequest.status)) {
     return NextResponse.json({ error: "Disputes allowed after delivery." }, { status: 400 });
   }
 

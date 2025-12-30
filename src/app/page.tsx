@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, BadgeCheck, Clock, Package, ShieldCheck, Truck } from "lucide-react";
-import { DeliveryJobStatus, RequestStatus } from "@prisma/client";
+import { DeliveryJobStatus, ServiceRequestStatus } from "@prisma/client";
 
 import { prisma } from "@/server/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 
 export default async function HomePage() {
   const [openRequests, openJobs] = await Promise.all([
-    prisma.serviceRequest.count({ where: { status: RequestStatus.SUBMITTED } }),
+    prisma.serviceRequest.count({ where: { status: ServiceRequestStatus.SUBMITTED } }),
     prisma.deliveryJob.count({ where: { status: DeliveryJobStatus.OPEN } })
   ]);
 

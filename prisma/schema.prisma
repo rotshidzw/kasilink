@@ -14,7 +14,7 @@ enum Role {
   ADMIN
 }
 
-enum RequestStatus {
+enum ServiceRequestStatus {
   DRAFT
   SUBMITTED
   MATCHED
@@ -188,7 +188,7 @@ model ServiceRequest {
   title       String
   description String
   address     String
-  status      RequestStatus @default(DRAFT)
+  status      ServiceRequestStatus @default(DRAFT)
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
   residentId  String
@@ -213,6 +213,8 @@ model ServiceRequest {
   events      ServiceRequestEvent[]
   disputes    Dispute[]
   favorites   Favorite[]
+  orderHistory       OrderHistory[]
+  voucherRedemptions VoucherRedemption[]
 }
 
 model ServiceRequestEvent {

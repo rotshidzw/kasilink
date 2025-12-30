@@ -4,7 +4,7 @@ import {
   InventoryStatus,
   OrderStatus,
   RequestEventType,
-  RequestStatus,
+  ServiceRequestStatus,
   Role,
   PrismaClient
 } from "@prisma/client";
@@ -156,7 +156,7 @@ async function main() {
       title: "Water delivery for Section D",
       description: "Need 5 drums delivered before 5pm.",
       address: "Section D Community Hall",
-      status: RequestStatus.SUBMITTED,
+      status: ServiceRequestStatus.SUBMITTED,
       residentId: resident.id,
       categoryId: categories.find((category) => category.name === "Water")?.id ?? categories[0]!.id,
       events: {
@@ -244,7 +244,7 @@ async function main() {
         title: "Draft grocery pickup",
         description: "Need maize meal and beans.",
         address: "12 Pine Street · Soweto",
-        status: RequestStatus.DRAFT,
+        status: ServiceRequestStatus.DRAFT,
         residentId: resident.id,
         categoryId: categories[2]!.id
       },
@@ -252,7 +252,7 @@ async function main() {
         title: "Match gas delivery",
         description: "Swap gas cylinder",
         address: "88 Market Road · Johannesburg",
-        status: RequestStatus.MATCHED,
+        status: ServiceRequestStatus.MATCHED,
         residentId: resident.id,
         assignedDriverId: driver.id,
         assignedAt: new Date(),
@@ -262,7 +262,7 @@ async function main() {
         title: "En route water drums",
         description: "Deliver 2 drums to community hall",
         address: "Section D Community Hall",
-        status: RequestStatus.EN_ROUTE,
+        status: ServiceRequestStatus.EN_ROUTE,
         residentId: resident.id,
         assignedDriverId: driver.id,
         assignedAt: new Date(),
@@ -272,7 +272,7 @@ async function main() {
         title: "Delivered handyman job",
         description: "Fix leaking tap",
         address: "12 Pine Street · Soweto",
-        status: RequestStatus.DELIVERED,
+        status: ServiceRequestStatus.DELIVERED,
         residentId: resident.id,
         assignedBusinessId: business.id,
         deliveredAt: new Date(),

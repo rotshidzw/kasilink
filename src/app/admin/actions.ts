@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { DeliveryJobStatus, OrderStatus, RequestEventType, RequestStatus } from "@prisma/client";
+import { DeliveryJobStatus, OrderStatus, RequestEventType, ServiceRequestStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/server/db";
@@ -9,7 +9,7 @@ import { getServerAuthSession } from "@/server/auth";
 
 const requestSchema = z.object({
   requestId: z.string().cuid(),
-  status: z.nativeEnum(RequestStatus)
+  status: z.nativeEnum(ServiceRequestStatus)
 });
 
 const orderSchema = z.object({
@@ -142,7 +142,7 @@ export async function assignDriver(formData: FormData) {
   await prisma.serviceRequest.update({
     where: { id: parsed.data.requestId },
     data: {
-      status: RequestStatus.MATCHED,
+      status: ServiceRequestStatus.MATCHED,
       assignedDriverId: parsed.data.driverId,
       assignedAt: new Date(),
       deliveryJob: {
