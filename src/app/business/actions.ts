@@ -49,14 +49,24 @@ export async function upsertStore(formData: FormData) {
     return;
   }
 
-  await prisma.shop.upsert({
+  const existingShop = await prisma.shop.findFirst({
     where: { ownerId: session.user.id },
-    update: parsed.data,
-    create: {
-      ownerId: session.user.id,
-      ...parsed.data
-    }
+    select: { id: true }
   });
+
+  if (existingShop) {
+    await prisma.shop.update({
+      where: { id: existingShop.id },
+      data: parsed.data
+    });
+  } else {
+    await prisma.shop.create({
+      data: {
+        ownerId: session.user.id,
+        ...parsed.data
+      }
+    });
+  }
 
   revalidatePath("/business/store");
 }
