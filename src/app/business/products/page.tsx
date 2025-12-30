@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { createBusinessProduct, deleteBusinessProduct, updateBusinessProduct } from "@/app/business/actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function BusinessProductsPage() {
   const session = await getServerAuthSession();
   if (!session?.user) {
