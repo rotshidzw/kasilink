@@ -80,8 +80,15 @@ EXCEPTION
 END $$;
 
 -- Announcements author
-ALTER TABLE "Announcement"
-  ADD COLUMN IF NOT EXISTS "authorId" TEXT;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'Announcement' AND column_name = 'authorId'
+  ) THEN
+    ALTER TABLE "Announcement" ADD COLUMN "authorId" TEXT;
+  END IF;
+END $$;
 
 DO $$
 BEGIN
@@ -97,9 +104,12 @@ END $$;
 
 DO $$
 BEGIN
-  ALTER TABLE "Announcement"
-    ADD CONSTRAINT "Announcement_authorId_fkey"
-    FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-EXCEPTION
-  WHEN duplicate_object THEN NULL;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'Announcement_authorId_fkey'
+  ) THEN
+    ALTER TABLE "Announcement"
+      ADD CONSTRAINT "Announcement_authorId_fkey"
+      FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
 END $$;
