@@ -7,8 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 export default async function EventsPage() {
   const [restockAnnouncements, communityAnnouncements] = await Promise.all([
-    prisma.announcement.findMany({ where: { type: "RESTOCK" }, orderBy: { startsAt: "asc" } }),
-    prisma.announcement.findMany({ where: { type: "COMMUNITY" }, orderBy: { startsAt: "asc" } })
+    prisma.announcement.findMany({ where: { category: "DEALS" }, orderBy: { createdAt: "desc" } }),
+    prisma.announcement.findMany({ where: { category: "COMMUNITY" }, orderBy: { createdAt: "desc" } })
   ]);
 
   return (
@@ -45,8 +45,8 @@ export default async function EventsPage() {
                   <TableRow key={announcement.id}>
                     <TableCell className="font-medium text-slate-900">{announcement.title}</TableCell>
                     <TableCell>
-                      {announcement.startsAt
-                        ? new Date(announcement.startsAt).toLocaleDateString()
+                      {announcement.expiresAt
+                        ? new Date(announcement.expiresAt).toLocaleDateString()
                         : "TBA"}
                     </TableCell>
                     <TableCell>{announcement.body}</TableCell>
@@ -73,7 +73,7 @@ export default async function EventsPage() {
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-semibold text-slate-900">{announcement.title}</h3>
                 <Badge variant="outline">
-                  {announcement.startsAt ? new Date(announcement.startsAt).toLocaleDateString() : "Ongoing"}
+                  {announcement.expiresAt ? new Date(announcement.expiresAt).toLocaleDateString() : "Ongoing"}
                 </Badge>
               </div>
               <p className="mt-2 text-sm text-slate-600">{announcement.body}</p>

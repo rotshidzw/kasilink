@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bell, Calendar, ClipboardList, Store, Truck } from "lucide-react";
+import { Bell, Calendar, ClipboardList, Heart, Store, Ticket, Truck } from "lucide-react";
 
 import { getServerAuthSession } from "@/server/auth";
 import { prisma } from "@/server/db";
@@ -18,15 +18,23 @@ export default async function DashboardPage() {
 
   const role = session.user.role;
 
-  const [requests, announcements, shops, openJobs] = await Promise.all([
+  const [requests, announcements, shops, openJobs, favorites, reorders, wallet] = await Promise.all([
     prisma.serviceRequest.findMany({
       where: { residentId: session.user.id },
       orderBy: { createdAt: "desc" },
       take: 4
     }),
-    prisma.announcement.findMany({ orderBy: { startsAt: "asc" }, take: 3 }),
+    prisma.announcement.findMany({ orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }], take: 3 }),
     prisma.shop.findMany({ orderBy: { name: "asc" }, take: 3 }),
-    prisma.deliveryJob.count({ where: { status: "OPEN" } })
+    prisma.deliveryJob.count({ where: { status: "OPEN" } }),
+    prisma.favorite.findMany({ where: { userId: session.user.id }, orderBy: { createdAt: "desc" }, take: 3 }),
+    prisma.orderHistory.findMany({
+      where: { userId: session.user.id },
+      include: { request: true },
+      orderBy: { createdAt: "desc" },
+      take: 3
+    }),
+    prisma.wallet.findUnique({ where: { userId: session.user.id } })
   ]);
 
   if (role === "RESIDENT") {
@@ -110,6 +118,56 @@ export default async function DashboardPage() {
                     <p className="text-sm font-semibold text-slate-900">{announcement.title}</p>
                     <p className="text-xs text-slate-500">{announcement.body}</p>
                   </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="grid gap-6 lg:grid-cols-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Heart className="h-4 w-4" />
+                Favorites
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {favorites.length === 0 && <p className="text-sm text-slate-600">No favorites saved yet.</p>}
+              {favorites.map((favorite) => (
+                <div key={favorite.id} className="rounded-lg border border-slate-200 p-3 text-sm text-slate-700">
+                  <p className="font-semibold text-slate-900">{favorite.label}</p>
+                  <p className="text-xs text-slate-500">{favorite.type}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Ticket className="h-4 w-4" />
+                Wallet
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-sm text-slate-600">Wallet balance</p>
+              <p className="text-2xl font-semibold text-slate-900">
+                R {((wallet?.balanceCents ?? 0) / 100).toFixed(2)}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick reorder</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {reorders.length === 0 && <p className="text-sm text-slate-600">No reorders yet.</p>}
+              {reorders.map((history) => (
+                <div key={history.id} className="rounded-lg border border-slate-200 p-3 text-sm">
+                  <p className="font-semibold text-slate-900">{history.request.title}</p>
+                  <p className="text-xs text-slate-500">{history.request.address}</p>
                 </div>
               ))}
             </CardContent>

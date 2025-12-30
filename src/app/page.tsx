@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 
 export default async function HomePage() {
   const [openRequests, openJobs] = await Promise.all([
-    prisma.serviceRequest.count({ where: { status: "OPEN" } }),
+    prisma.serviceRequest.count({ where: { status: "SUBMITTED" } }),
     prisma.deliveryJob.count({ where: { status: "OPEN" } })
   ]);
 

@@ -22,7 +22,7 @@ export default async function BusinessProductsPage() {
   });
 
   const requests = await prisma.serviceRequest.findMany({
-    where: { assignedToId: session.user.id },
+    where: { assignedBusinessId: session.user.id },
     orderBy: { createdAt: "desc" },
     take: 5
   });

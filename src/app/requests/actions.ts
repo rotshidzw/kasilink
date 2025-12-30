@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { ServiceRequestStatus } from "@prisma/client";
+import { RequestEventType, RequestStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -57,7 +57,15 @@ export async function createServiceRequest(prevState: RequestState, formData: Fo
       description: parsed.data.description,
       address: `${parsed.data.addressLabel} · ${parsed.data.addressLine1}`,
       categoryId: parsed.data.categoryId,
-      residentId: session.user.id
+      residentId: session.user.id,
+      status: RequestStatus.SUBMITTED,
+      events: {
+        create: {
+          type: RequestEventType.SUBMITTED,
+          message: "Request submitted.",
+          actorId: session.user.id
+        }
+      }
     }
   });
 
@@ -74,11 +82,24 @@ export async function assignRequest(requestId: string) {
     return { error: "Not allowed" };
   }
 
+  const assignmentData =
+    session.user.role === "DRIVER"
+      ? { assignedDriverId: session.user.id }
+      : { assignedBusinessId: session.user.id };
+
   await prisma.serviceRequest.update({
     where: { id: requestId },
     data: {
-      status: ServiceRequestStatus.ASSIGNED,
-      assignedToId: session.user.id
+      status: RequestStatus.MATCHED,
+      assignedAt: new Date(),
+      ...assignmentData,
+      events: {
+        create: {
+          type: session.user.role === "DRIVER" ? RequestEventType.DRIVER_ASSIGNED : RequestEventType.BUSINESS_ASSIGNED,
+          message: "Assignment added.",
+          actorId: session.user.id
+        }
+      }
     }
   });
 

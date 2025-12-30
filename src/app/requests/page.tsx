@@ -12,16 +12,26 @@ import { cn } from "@/lib/utils";
 
 function statusLabel(status: string) {
   switch (status) {
-    case "OPEN":
-      return "Open";
-    case "ASSIGNED":
-      return "Assigned";
-    case "IN_PROGRESS":
-      return "In progress";
+    case "DRAFT":
+      return "Draft";
+    case "SUBMITTED":
+      return "Submitted";
+    case "MATCHED":
+      return "Matched";
+    case "ACCEPTED":
+      return "Accepted";
+    case "PICKED_UP":
+      return "Picked up";
+    case "EN_ROUTE":
+      return "En route";
+    case "DELIVERED":
+      return "Delivered";
     case "COMPLETED":
       return "Completed";
     case "CANCELLED":
       return "Cancelled";
+    case "REJECTED":
+      return "Rejected";
     default:
       return status;
   }
@@ -54,7 +64,7 @@ export default async function RequestsPage() {
     where: isResident
       ? { residentId: session.user.id }
       : {
-          status: "OPEN"
+          status: "SUBMITTED"
         },
     include: {
       category: true,
@@ -109,12 +119,14 @@ export default async function RequestsPage() {
                   return (
                     <TableRow key={request.id}>
                       <TableCell>
-                        <div className="font-medium text-slate-900">{request.title}</div>
+                        <Link href={`/requests/${request.id}`} className="font-medium text-slate-900 underline-offset-2 hover:underline">
+                          {request.title}
+                        </Link>
                         <div className="text-xs text-slate-500">{request.address}</div>
                       </TableCell>
                       <TableCell>{request.category.name}</TableCell>
                       <TableCell>
-                        <Badge variant={request.status === "OPEN" ? "default" : "secondary"}>
+                        <Badge variant={request.status === "SUBMITTED" ? "default" : "secondary"}>
                           {statusLabel(request.status)}
                         </Badge>
                       </TableCell>
@@ -122,7 +134,7 @@ export default async function RequestsPage() {
                       {!isResident && (
                         <TableCell>
                           <form action={action}>
-                            <Button type="submit" size="sm" disabled={request.status !== "OPEN"}>
+                            <Button type="submit" size="sm" disabled={request.status !== "SUBMITTED"}>
                               Assign to me
                             </Button>
                           </form>

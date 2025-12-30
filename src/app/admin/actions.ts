@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { DeliveryJobStatus, OrderStatus, ServiceRequestStatus } from "@prisma/client";
+import { DeliveryJobStatus, OrderStatus, RequestEventType, RequestStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/server/db";
@@ -9,7 +9,7 @@ import { getServerAuthSession } from "@/server/auth";
 
 const requestSchema = z.object({
   requestId: z.string().cuid(),
-  status: z.nativeEnum(ServiceRequestStatus)
+  status: z.nativeEnum(RequestStatus)
 });
 
 const orderSchema = z.object({
@@ -62,7 +62,17 @@ export async function updateRequestStatus(formData: FormData) {
 
   await prisma.serviceRequest.update({
     where: { id: parsed.data.requestId },
-    data: { status: parsed.data.status }
+    data: {
+      status: parsed.data.status,
+      updatedById: session.user.id,
+      events: {
+        create: {
+          type: RequestEventType.STATUS_CHANGED,
+          message: `Status updated to ${parsed.data.status}.`,
+          actorId: session.user.id
+        }
+      }
+    }
   });
 
   revalidatePath("/admin");
@@ -132,8 +142,9 @@ export async function assignDriver(formData: FormData) {
   await prisma.serviceRequest.update({
     where: { id: parsed.data.requestId },
     data: {
-      status: ServiceRequestStatus.ASSIGNED,
-      assignedToId: parsed.data.driverId,
+      status: RequestStatus.MATCHED,
+      assignedDriverId: parsed.data.driverId,
+      assignedAt: new Date(),
       deliveryJob: {
         upsert: {
           create: {
@@ -145,6 +156,13 @@ export async function assignDriver(formData: FormData) {
             driverId: parsed.data.driverId,
             status: DeliveryJobStatus.ASSIGNED
           }
+        }
+      },
+      events: {
+        create: {
+          type: RequestEventType.DRIVER_ASSIGNED,
+          message: "Driver assigned by admin.",
+          actorId: session.user.id
         }
       }
     }
