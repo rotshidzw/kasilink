@@ -13,10 +13,11 @@ export function Navbar() {
   const role = session?.user?.role;
 
   const navLinks = [
+    { href: "/dashboard", label: "Dashboard", roles: ["RESIDENT", "BUSINESS", "DRIVER", "ADMIN"] },
     { href: "/requests", label: "Requests", roles: ["RESIDENT", "BUSINESS", "DRIVER", "ADMIN"] },
-    { href: "/events", label: "Restock days", roles: ["RESIDENT", "BUSINESS", "DRIVER", "ADMIN"] },
-    { href: "/shop", label: "Shop", roles: ["RESIDENT", "BUSINESS", "ADMIN"] },
-    { href: "/business/store", label: "Store profile", roles: ["BUSINESS"] },
+    { href: "/drivers", label: "Drivers", roles: ["RESIDENT", "BUSINESS", "ADMIN"] },
+    { href: "/events", label: "Events", roles: ["RESIDENT", "BUSINESS", "DRIVER", "ADMIN"] },
+    { href: "/business", label: "Business", roles: ["BUSINESS", "ADMIN"] },
     { href: "/business/products", label: "Products", roles: ["BUSINESS"] },
     { href: "/driver", label: "Driver", roles: ["DRIVER"] },
     { href: "/admin", label: "Admin", roles: ["ADMIN"] }

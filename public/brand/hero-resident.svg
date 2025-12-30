@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+  <defs>
+    <linearGradient id="grad" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="600" fill="url(#grad)"/>
+  <circle cx="980" cy="120" r="120" fill="#1e293b" opacity="0.6"/>
+  <circle cx="200" cy="460" r="160" fill="#1e293b" opacity="0.5"/>
+  <text x="80" y="200" fill="#f8fafc" font-family="Arial, sans-serif" font-size="48" font-weight="700">
+    Resident hub
+  </text>
+  <text x="80" y="260" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="24">
+    Requests • Community • Deliveries
+  </text>
+</svg>
