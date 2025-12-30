@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { InventoryStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
@@ -113,6 +114,7 @@ export async function createBusinessProduct(formData: FormData) {
   });
 
   revalidatePath("/business/products");
+  redirect("/business/products");
 }
 
 export async function updateBusinessProduct(formData: FormData) {
@@ -144,6 +146,7 @@ export async function updateBusinessProduct(formData: FormData) {
   });
 
   revalidatePath("/business/products");
+  redirect("/business/products");
 }
 
 export async function deleteBusinessProduct(formData: FormData) {
@@ -160,4 +163,5 @@ export async function deleteBusinessProduct(formData: FormData) {
   await prisma.product.delete({ where: { id: productId } });
 
   revalidatePath("/business/products");
+  redirect("/business/products");
 }
