@@ -3,7 +3,6 @@
 import { z } from "zod";
 import { InventoryStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
@@ -31,6 +30,11 @@ const updateProductSchema = z.object({
   price: z.coerce.number().positive(),
   unit: z.string().min(1)
 });
+
+export type ProductActionState = {
+  error?: string;
+  success?: boolean;
+};
 
 export async function upsertStore(formData: FormData) {
   const session = await getServerAuthSession();
@@ -72,15 +76,18 @@ export async function upsertStore(formData: FormData) {
   revalidatePath("/business/store");
 }
 
-export async function createBusinessProduct(formData: FormData) {
+export async function createBusinessProduct(
+  prevState: ProductActionState,
+  formData: FormData
+): Promise<ProductActionState> {
   const session = await getServerAuthSession();
   if (!session?.user || session.user.role !== "BUSINESS") {
-    return;
+    return { error: "Unauthorized." };
   }
 
   const shop = await prisma.shop.findFirst({ where: { ownerId: session.user.id } });
   if (!shop) {
-    return;
+    return { error: "Create your store profile before adding products." };
   }
 
   const parsed = productSchema.safeParse({
@@ -92,7 +99,7 @@ export async function createBusinessProduct(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return;
+    return { error: parsed.error.errors[0]?.message ?? "Invalid product details." };
   }
 
   const status = parsed.data.quantity <= 0 ? InventoryStatus.OUT_OF_STOCK : InventoryStatus.IN_STOCK;
@@ -114,13 +121,16 @@ export async function createBusinessProduct(formData: FormData) {
   });
 
   revalidatePath("/business/products");
-  redirect("/business/products");
+  return { success: true };
 }
 
-export async function updateBusinessProduct(formData: FormData) {
+export async function updateBusinessProduct(
+  prevState: ProductActionState,
+  formData: FormData
+): Promise<ProductActionState> {
   const session = await getServerAuthSession();
   if (!session?.user || session.user.role !== "BUSINESS") {
-    return;
+    return { error: "Unauthorized." };
   }
 
   const parsed = updateProductSchema.safeParse({
@@ -132,7 +142,7 @@ export async function updateBusinessProduct(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return;
+    return { error: parsed.error.errors[0]?.message ?? "Invalid product details." };
   }
 
   await prisma.product.update({
@@ -146,22 +156,25 @@ export async function updateBusinessProduct(formData: FormData) {
   });
 
   revalidatePath("/business/products");
-  redirect("/business/products");
+  return { success: true };
 }
 
-export async function deleteBusinessProduct(formData: FormData) {
+export async function deleteBusinessProduct(
+  prevState: ProductActionState,
+  formData: FormData
+): Promise<ProductActionState> {
   const session = await getServerAuthSession();
   if (!session?.user || session.user.role !== "BUSINESS") {
-    return;
+    return { error: "Unauthorized." };
   }
 
   const productId = formData.get("productId");
   if (typeof productId !== "string") {
-    return;
+    return { error: "Invalid product selection." };
   }
 
   await prisma.product.delete({ where: { id: productId } });
 
   revalidatePath("/business/products");
-  redirect("/business/products");
+  return { success: true };
 }
