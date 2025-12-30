@@ -39,8 +39,8 @@ export default async function DriverPage() {
           <h1 className="text-2xl font-semibold text-slate-900">Driver dispatch</h1>
           <p className="text-sm text-slate-600">Accept new delivery jobs and confirm OTP handoffs.</p>
         </div>
-        <div className="relative h-40 w-full overflow-hidden rounded-2xl">
-          <Image src="/brand/hero-driver.svg" alt="Driver hero" fill className="object-cover" />
+        <div className="decorative-image relative h-40 w-full overflow-hidden rounded-2xl">
+          <Image src="/brand/hero-driver.svg" alt="Driver hero" fill className="object-cover" data-decorative />
         </div>
       </div>
 

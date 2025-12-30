@@ -3,6 +3,7 @@ import { RequestEventType, ServiceRequestStatus } from "@prisma/client";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
+import { sendWhatsAppMessage } from "@/server/notifications/whatsapp";
 
 const transitions: Record<ServiceRequestStatus, ServiceRequestStatus[]> = {
   DRAFT: [ServiceRequestStatus.SUBMITTED],
@@ -88,6 +89,18 @@ export async function POST(request: Request, { params }: { params: { id: string 
       }
     }
   });
+
+  const updatedRequest = await prisma.serviceRequest.findUnique({
+    where: { id: params.id },
+    include: { resident: { include: { profile: true } } }
+  });
+
+  if (updatedRequest?.resident?.profile?.phone) {
+    await sendWhatsAppMessage({
+      to: updatedRequest.resident.profile.phone,
+      message: `KasiLink update: Your request is now ${newStatus}.`
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

@@ -7,8 +7,10 @@ import { DeliveryJobStatus } from "@prisma/client";
 import { getServerAuthSession } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 export default async function DashboardPage() {
@@ -59,8 +61,8 @@ export default async function DashboardPage() {
                   </Link>
                 </div>
               </div>
-              <div className="relative h-40 w-full overflow-hidden rounded-2xl">
-                <Image src="/brand/hero-resident.svg" alt="Resident hero" fill className="object-cover" />
+              <div className="decorative-image relative h-40 w-full overflow-hidden rounded-2xl">
+                <Image src="/brand/hero-resident.svg" alt="Resident hero" fill className="object-cover" data-decorative />
               </div>
             </CardContent>
           </Card>
@@ -83,6 +85,33 @@ export default async function DashboardPage() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </section>
+
+        <section>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900">Nearby today</h2>
+            <Link href="/events" className="text-sm font-semibold text-slate-900">
+              View all
+            </Link>
+          </div>
+          <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
+            {announcements.map((announcement) => (
+              <Link
+                key={announcement.id}
+                href="/events"
+                className="min-w-[220px] rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <p className="text-xs uppercase text-slate-400">{announcement.category}</p>
+                <p className="mt-2 text-sm font-semibold text-slate-900">{announcement.title}</p>
+                <p className="mt-1 text-xs text-slate-500">{announcement.body}</p>
+              </Link>
+            ))}
+            {announcements.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-600">
+                No updates yet.
+              </div>
+            )}
           </div>
         </section>
 
@@ -171,6 +200,24 @@ export default async function DashboardPage() {
                   <p className="text-xs text-slate-500">{history.request.address}</p>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Call me back</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-slate-600">
+              <p>Need help? Leave your details and the call center will reach out.</p>
+              <form action="/api/callbacks" method="post" className="space-y-2">
+                <Input name="name" placeholder="Your name" />
+                <Input name="phone" placeholder="Best contact number" required />
+                <Input name="area" placeholder="Area (optional)" />
+                <Textarea name="notes" placeholder="How can we help?" />
+                <Button type="submit" size="sm" className="w-fit">
+                  Request a call back
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </section>

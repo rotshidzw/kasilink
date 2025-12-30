@@ -29,8 +29,8 @@ export default async function BusinessStorePage() {
             Keep your spaza profile updated so residents can find you quickly.
           </p>
         </div>
-        <div className="relative h-40 w-full overflow-hidden rounded-2xl">
-          <Image src="/brand/hero-business.svg" alt="Shop owner illustration" fill className="object-cover" />
+        <div className="decorative-image relative h-40 w-full overflow-hidden rounded-2xl">
+          <Image src="/brand/hero-business.svg" alt="Shop owner illustration" fill className="object-cover" data-decorative />
         </div>
       </div>
 

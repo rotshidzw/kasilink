@@ -42,8 +42,8 @@ export default async function BusinessProductsPage() {
           <h1 className="text-2xl font-semibold text-slate-900">Products & inventory</h1>
           <p className="text-sm text-slate-600">Manage your catalog, pricing, and stock status.</p>
         </div>
-        <div className="relative h-40 w-full overflow-hidden rounded-2xl">
-          <Image src="/brand/hero-business.svg" alt="Store illustration" fill className="object-cover" />
+        <div className="decorative-image relative h-40 w-full overflow-hidden rounded-2xl">
+          <Image src="/brand/hero-business.svg" alt="Store illustration" fill className="object-cover" data-decorative />
         </div>
       </div>
 

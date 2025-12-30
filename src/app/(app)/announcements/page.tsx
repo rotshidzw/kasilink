@@ -23,8 +23,8 @@ export default async function AnnouncementsPage() {
           <h1 className="text-2xl font-semibold text-slate-900">Announcements</h1>
           <p className="text-sm text-slate-600">Community updates, service alerts, and deals.</p>
         </div>
-        <div className="relative h-40 w-full overflow-hidden rounded-2xl">
-          <Image src="/brand/hero-resident.svg" alt="Announcements hero" fill className="object-cover" />
+        <div className="decorative-image relative h-40 w-full overflow-hidden rounded-2xl">
+          <Image src="/brand/hero-resident.svg" alt="Announcements hero" fill className="object-cover" data-decorative />
         </div>
       </div>
 

@@ -34,7 +34,7 @@ export default async function AdminPage() {
 
   const [requests, orders, jobs, users, stores, drivers, categories, products] = await Promise.all([
     prisma.serviceRequest.findMany({
-      include: { resident: true, category: true },
+      include: { resident: true, category: true, contact: true },
       orderBy: { createdAt: "desc" },
       take: 5
     }),
@@ -62,8 +62,8 @@ export default async function AdminPage() {
           <h1 className="text-2xl font-semibold text-slate-900">Admin control center</h1>
           <p className="text-sm text-slate-600">Monitor service delivery, orders, and dispatch status.</p>
         </div>
-        <div className="relative h-40 w-full overflow-hidden rounded-2xl">
-          <Image src="/brand/hero-admin.svg" alt="Admin hero" fill className="object-cover" />
+        <div className="decorative-image relative h-40 w-full overflow-hidden rounded-2xl">
+          <Image src="/brand/hero-admin.svg" alt="Admin hero" fill className="object-cover" data-decorative />
         </div>
       </div>
 
@@ -107,7 +107,7 @@ export default async function AdminPage() {
                     <div className="font-medium text-slate-900">{request.title}</div>
                     <div className="text-xs text-slate-500">{request.category.name}</div>
                   </TableCell>
-                  <TableCell>{request.resident.email}</TableCell>
+                  <TableCell>{request.resident?.email ?? request.contact?.phone ?? "Assisted"}</TableCell>
                   <TableCell>
                     <Badge variant="secondary">{request.status}</Badge>
                   </TableCell>

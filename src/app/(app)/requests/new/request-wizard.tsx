@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFormState } from "react-dom";
 import { ArrowRight, MapPin, Sparkles } from "lucide-react";
 
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { createServiceRequest, type RequestState } from "@/app/(app)/requests/actions";
 
 const initialState: RequestState = {};
+const DRAFT_KEY = "kasilink:draft-request";
 
 type RequestWizardProps = {
   categories: { id: string; name: string }[];
@@ -30,6 +31,37 @@ export default function RequestWizard({ categories, addresses }: RequestWizardPr
     () => categories.find((category) => category.id === categoryId),
     [categories, categoryId]
   );
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(DRAFT_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as {
+          title?: string;
+          description?: string;
+          categoryId?: string;
+          addressId?: string;
+          addressLabel?: string;
+          addressLine1?: string;
+        };
+        if (parsed.title) setTitle(parsed.title);
+        if (parsed.description) setDescription(parsed.description);
+        if (parsed.categoryId) setCategoryId(parsed.categoryId);
+        if (parsed.addressId !== undefined) setAddressId(parsed.addressId);
+        if (parsed.addressLabel) setAddressLabel(parsed.addressLabel);
+        if (parsed.addressLine1) setAddressLine1(parsed.addressLine1);
+      } catch {
+        window.localStorage.removeItem(DRAFT_KEY);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({ title, description, categoryId, addressId, addressLabel, addressLine1 })
+    );
+  }, [title, description, categoryId, addressId, addressLabel, addressLine1]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
@@ -52,7 +84,11 @@ export default function RequestWizard({ categories, addresses }: RequestWizardPr
               </button>
             ))}
           </div>
-          <form action={formAction} className="mt-6 space-y-4">
+          <form
+            action={formAction}
+            className="mt-6 space-y-4"
+            onSubmit={() => window.localStorage.removeItem(DRAFT_KEY)}
+          >
             <input type="hidden" name="categoryId" value={categoryId} />
             <input type="hidden" name="title" value={title} />
             <input type="hidden" name="description" value={description} />

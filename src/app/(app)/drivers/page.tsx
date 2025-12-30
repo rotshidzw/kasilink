@@ -19,7 +19,7 @@ export default async function DriversPage() {
 
   const drivers = await prisma.user.findMany({
     where: { role: "DRIVER" },
-    include: { driverProfile: true },
+    include: { driverProfile: true, profile: true },
     orderBy: { createdAt: "desc" }
   });
 
@@ -32,8 +32,8 @@ export default async function DriversPage() {
           <h1 className="text-2xl font-semibold text-slate-900">Drivers</h1>
           <p className="text-sm text-slate-600">View availability and delivery capacity across the driver fleet.</p>
         </div>
-        <div className="relative h-40 w-full overflow-hidden rounded-2xl">
-          <Image src="/brand/hero-driver.svg" alt="Drivers hero" fill className="object-cover" />
+        <div className="decorative-image relative h-40 w-full overflow-hidden rounded-2xl">
+          <Image src="/brand/hero-driver.svg" alt="Drivers hero" fill className="object-cover" data-decorative />
         </div>
       </div>
 
@@ -48,9 +48,26 @@ export default async function DriversPage() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-slate-600">
               <p>{driver.email}</p>
+              {driver.profile?.phone && (
+                <p>
+                  <a href={`tel:${driver.profile.phone}`} className="text-slate-900 underline">
+                    {driver.profile.phone}
+                  </a>
+                </p>
+              )}
               <p>Vehicle: {driver.driverProfile?.vehicleType ?? "Unspecified"}</p>
               <p>Rating: {driver.driverProfile?.ratingAvg?.toFixed(1) ?? "5.0"}</p>
               <p>Completed jobs: {driver.driverProfile?.completedJobs ?? 0}</p>
+              {driver.profile?.phone && (
+                <a
+                  href={`https://wa.me/${driver.profile.phone.replace(/\\D/g, "")}`}
+                  className="text-sm font-semibold text-slate-900 underline"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  WhatsApp driver
+                </a>
+              )}
               {isAdmin && (
                 <form action={`/api/drivers/${driver.id}/availability`} method="post">
                   <input type="hidden" name="isAvailable" value={(!driver.driverProfile?.isAvailable).toString()} />

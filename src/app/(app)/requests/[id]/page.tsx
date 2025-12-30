@@ -48,6 +48,7 @@ export default async function RequestDetailsPage({ params }: { params: { id: str
   const isResident = session.user.role === "RESIDENT" && request.residentId === session.user.id;
   const isDriver = session.user.role === "DRIVER" && request.assignedDriverId === session.user.id;
   const isAdmin = session.user.role === "ADMIN";
+  const isCallcenter = session.user.role === "CALLCENTER";
 
   const [drivers, businesses] = isAdmin
     ? await Promise.all([
@@ -73,6 +74,13 @@ export default async function RequestDetailsPage({ params }: { params: { id: str
           </CardHeader>
           <CardContent className="space-y-4 text-sm text-slate-600">
             <p>{request.description}</p>
+            {request.contact && (
+              <div className="rounded-lg border border-slate-200 p-3 text-xs text-slate-600">
+                <p className="font-semibold text-slate-900">Assisted contact</p>
+                <p>{request.contact.name}</p>
+                <p>{request.contact.phone}</p>
+              </div>
+            )}
             <div className="flex items-start gap-2 rounded-lg border border-slate-200 p-3">
               <MapPin className="mt-0.5 h-4 w-4 text-slate-500" />
               <div>
@@ -128,8 +136,8 @@ export default async function RequestDetailsPage({ params }: { params: { id: str
                     ? `Lat ${request.assignedDriver.driverProfile.lastLat}, Lng ${request.assignedDriver.driverProfile.lastLng}`
                     : "Location updates pending."}
                 </p>
-                <div className="relative mt-3 h-28 w-full overflow-hidden rounded-lg">
-                  <Image src="/brand/map-preview.svg" alt="Map preview" fill className="object-cover" />
+                <div className="decorative-image relative mt-3 h-28 w-full overflow-hidden rounded-lg">
+                  <Image src="/brand/map-preview.svg" alt="Map preview" fill className="object-cover" data-decorative />
                 </div>
                 <Button size="sm" variant="outline" className="mt-2 w-full" disabled>
                   Open map (coming soon)
@@ -211,7 +219,7 @@ export default async function RequestDetailsPage({ params }: { params: { id: str
                 ))}
               </div>
             )}
-            {isAdmin && (
+            {(isAdmin || isCallcenter) && (
               <div className="space-y-2">
                 <form action={`/api/requests/${request.id}/assign-driver`} method="post" className="space-y-2">
                   <select
@@ -245,6 +253,12 @@ export default async function RequestDetailsPage({ params }: { params: { id: str
                   </select>
                   <Button type="submit" variant="outline">
                     Assign business
+                  </Button>
+                </form>
+                <form action={`/api/requests/${request.id}/whatsapp`} method="post" className="space-y-2">
+                  <Textarea name="message" placeholder="WhatsApp update message" required />
+                  <Button type="submit" variant="outline">
+                    Send WhatsApp update
                   </Button>
                 </form>
               </div>

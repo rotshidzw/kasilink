@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
+import { sendWhatsAppMessage } from "@/server/notifications/whatsapp";
 
 const requiredStringField = (minLength: number, message: string) =>
   z.preprocess((value) => (typeof value === "string" ? value : ""), z.string().min(minLength, message));
@@ -68,6 +69,18 @@ export async function createServiceRequest(prevState: RequestState, formData: Fo
       }
     }
   });
+
+  const resident = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    include: { profile: true }
+  });
+
+  if (resident?.profile?.phone) {
+    await sendWhatsAppMessage({
+      to: resident.profile.phone,
+      message: "KasiLink: Your request has been submitted. We will update you shortly."
+    });
+  }
 
   redirect("/requests");
 }

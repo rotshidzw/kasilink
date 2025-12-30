@@ -61,8 +61,8 @@ export default async function ShopPage() {
             <h1 className="text-2xl font-semibold text-slate-900">Shop dashboard</h1>
             <p className="text-sm text-slate-600">Manage products and stock updates for your store.</p>
           </div>
-          <div className="relative h-40 w-full overflow-hidden rounded-2xl">
-            <Image src="/brand/hero-business.svg" alt="Shop hero" fill className="object-cover" />
+          <div className="decorative-image relative h-40 w-full overflow-hidden rounded-2xl">
+            <Image src="/brand/hero-business.svg" alt="Shop hero" fill className="object-cover" data-decorative />
           </div>
         </div>
         <ShopDashboard
@@ -91,8 +91,8 @@ export default async function ShopPage() {
             {!defaultAddress && "Add a default address to speed up checkout."}
           </p>
         </div>
-        <div className="relative h-40 w-full overflow-hidden rounded-2xl">
-          <Image src="/brand/hero-resident.svg" alt="Marketplace hero" fill className="object-cover" />
+        <div className="decorative-image relative h-40 w-full overflow-hidden rounded-2xl">
+          <Image src="/brand/hero-resident.svg" alt="Marketplace hero" fill className="object-cover" data-decorative />
         </div>
       </div>
 

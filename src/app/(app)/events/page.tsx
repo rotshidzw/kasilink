@@ -21,8 +21,8 @@ export default async function EventsPage() {
             Plan ahead with scheduled spaza restock windows and community announcements.
           </p>
         </div>
-        <div className="relative h-40 w-full overflow-hidden rounded-2xl">
-          <Image src="/brand/hero-resident.svg" alt="Community events" fill className="object-cover" />
+        <div className="decorative-image relative h-40 w-full overflow-hidden rounded-2xl">
+          <Image src="/brand/hero-resident.svg" alt="Community events" fill className="object-cover" data-decorative />
         </div>
       </div>
 

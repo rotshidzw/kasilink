@@ -62,8 +62,8 @@ export default async function BusinessDashboardPage() {
             </div>
           )}
         </div>
-        <div className="relative h-44 w-full overflow-hidden rounded-2xl">
-          <Image src="/brand/hero-business.svg" alt="Business hero" fill className="object-cover" />
+        <div className="decorative-image relative h-44 w-full overflow-hidden rounded-2xl">
+          <Image src="/brand/hero-business.svg" alt="Business hero" fill className="object-cover" data-decorative />
         </div>
       </div>
 

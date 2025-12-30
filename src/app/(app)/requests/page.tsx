@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { assignRequest } from "@/app/(app)/requests/actions";
 import { cn } from "@/lib/utils";
+import { DraftBanner } from "@/app/(app)/requests/draft-banner";
 
 function statusLabel(status: string) {
   switch (status) {
@@ -74,7 +75,8 @@ export default async function RequestsPage() {
           : { status: ServiceRequestStatus.SUBMITTED },
     include: {
       category: true,
-      resident: true
+      resident: true,
+      contact: true
     },
     orderBy: { createdAt: "desc" }
   });
@@ -95,8 +97,8 @@ export default async function RequestsPage() {
             </Link>
           )}
         </div>
-        <div className="relative h-32 w-full overflow-hidden rounded-2xl">
-          <Image src="/brand/hero-resident.svg" alt="Requests hero" fill className="object-cover" />
+        <div className="decorative-image relative h-32 w-full overflow-hidden rounded-2xl">
+          <Image src="/brand/hero-resident.svg" alt="Requests hero" fill className="object-cover" data-decorative />
         </div>
       </div>
 
@@ -106,6 +108,7 @@ export default async function RequestsPage() {
           <Badge variant="secondary">{requests.length} total</Badge>
         </CardHeader>
         <CardContent>
+          {isResident && <DraftBanner />}
           {requests.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-10 text-center text-sm text-slate-600">
               <ClipboardList className="h-6 w-6 text-slate-400" />
@@ -139,7 +142,13 @@ export default async function RequestsPage() {
                           {statusLabel(request.status)}
                         </Badge>
                       </TableCell>
-                      {!isResident && <TableCell>{request.resident.name ?? request.resident.email}</TableCell>}
+                      {!isResident && (
+                        <TableCell>
+                          {request.resident
+                            ? request.resident.name ?? request.resident.email
+                            : request.contact?.name ?? request.contact?.phone ?? "Assisted"}
+                        </TableCell>
+                      )}
                       {!isResident && (
                         <TableCell>
                           <form action={action}>
