@@ -4,11 +4,11 @@ import { redirect } from "next/navigation";
 import { getServerAuthSession } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { createBusinessProduct, deleteBusinessProduct, updateBusinessProduct } from "@/app/business/actions";
+import { ProductCreateForm, ProductRowActions } from "@/app/business/products/product-forms";
+
+export const dynamic = "force-dynamic";
 
 export default async function BusinessProductsPage() {
   const session = await getServerAuthSession();
@@ -22,7 +22,7 @@ export default async function BusinessProductsPage() {
   });
 
   const requests = await prisma.serviceRequest.findMany({
-    where: { assignedToId: session.user.id },
+    where: { assignedBusinessId: session.user.id },
     orderBy: { createdAt: "desc" },
     take: 5
   });
@@ -48,16 +48,7 @@ export default async function BusinessProductsPage() {
           <CardTitle>Add a product</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={createBusinessProduct} className="grid gap-3 md:grid-cols-2">
-            <Input name="name" placeholder="Product name" required />
-            <Input name="unit" placeholder="Unit (kg, pack)" required />
-            <Input name="description" placeholder="Short description" required />
-            <Input name="price" type="number" step="0.01" placeholder="Price" required />
-            <Input name="quantity" type="number" placeholder="Starting quantity" required />
-            <div className="md:col-span-2">
-              <Button type="submit">Create product</Button>
-            </div>
-          </form>
+          <ProductCreateForm />
         </CardContent>
       </Card>
 
@@ -90,22 +81,15 @@ export default async function BusinessProductsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <form action={updateBusinessProduct} className="flex flex-wrap items-center gap-2">
-                      <input type="hidden" name="productId" value={product.id} />
-                      <Input name="name" defaultValue={product.name} className="w-32" />
-                      <Input name="description" defaultValue={product.description ?? ""} className="w-40" />
-                      <Input name="unit" defaultValue={product.unit} className="w-20" />
-                      <Input name="price" type="number" step="0.01" defaultValue={Number(product.price)} className="w-24" />
-                      <Button size="sm" type="submit" variant="outline">
-                        Update
-                      </Button>
-                    </form>
-                    <form action={deleteBusinessProduct} className="mt-2">
-                      <input type="hidden" name="productId" value={product.id} />
-                      <Button size="sm" type="submit" variant="outline">
-                        Delete
-                      </Button>
-                    </form>
+                    <ProductRowActions
+                      product={{
+                        id: product.id,
+                        name: product.name,
+                        description: product.description,
+                        unit: product.unit,
+                        price: Number(product.price)
+                      }}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

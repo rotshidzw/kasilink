@@ -1,22 +1,31 @@
 "use server";
 
 import { z } from "zod";
-import { ServiceRequestStatus } from "@prisma/client";
+import { RequestEventType, ServiceRequestStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
 
-const stringField = z.preprocess((value) => (typeof value === "string" ? value : ""), z.string());
+const requiredStringField = (minLength: number, message: string) =>
+  z.preprocess((value) => (typeof value === "string" ? value : ""), z.string().min(minLength, message));
+const optionalStringField = z.preprocess(
+  (value) => (typeof value === "string" ? value : value == null ? undefined : ""),
+  z.string().optional()
+);
+const requiredCuidField = z.preprocess(
+  (value) => (typeof value === "string" ? value : ""),
+  z.string().cuid("Select a service category")
+);
 
 const createRequestSchema = z.object({
-  title: stringField.min(3, "Title is required"),
-  description: stringField.min(10, "Description is required"),
-  addressLine1: stringField.min(5, "Address is required"),
-  addressLabel: stringField.min(2, "Address label is required"),
-  addressId: stringField.optional(),
-  categoryId: stringField.cuid("Select a service category")
+  title: requiredStringField(3, "Title is required"),
+  description: requiredStringField(10, "Description is required"),
+  addressLine1: requiredStringField(5, "Address is required"),
+  addressLabel: requiredStringField(2, "Address label is required"),
+  addressId: optionalStringField,
+  categoryId: requiredCuidField
 });
 
 export type RequestState = {
@@ -48,7 +57,15 @@ export async function createServiceRequest(prevState: RequestState, formData: Fo
       description: parsed.data.description,
       address: `${parsed.data.addressLabel} · ${parsed.data.addressLine1}`,
       categoryId: parsed.data.categoryId,
-      residentId: session.user.id
+      residentId: session.user.id,
+      status: ServiceRequestStatus.SUBMITTED,
+      events: {
+        create: {
+          type: RequestEventType.SUBMITTED,
+          message: "Request submitted.",
+          actorId: session.user.id
+        }
+      }
     }
   });
 
@@ -65,11 +82,24 @@ export async function assignRequest(requestId: string) {
     return { error: "Not allowed" };
   }
 
+  const assignmentData =
+    session.user.role === "DRIVER"
+      ? { assignedDriverId: session.user.id }
+      : { assignedBusinessId: session.user.id };
+
   await prisma.serviceRequest.update({
     where: { id: requestId },
     data: {
-      status: ServiceRequestStatus.ASSIGNED,
-      assignedToId: session.user.id
+      status: ServiceRequestStatus.MATCHED,
+      assignedAt: new Date(),
+      ...assignmentData,
+      events: {
+        create: {
+          type: session.user.role === "DRIVER" ? RequestEventType.DRIVER_ASSIGNED : RequestEventType.BUSINESS_ASSIGNED,
+          message: "Assignment added.",
+          actorId: session.user.id
+        }
+      }
     }
   });
 

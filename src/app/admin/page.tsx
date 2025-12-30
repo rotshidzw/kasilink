@@ -109,7 +109,18 @@ export default async function AdminPage() {
                         className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs"
                         defaultValue={request.status}
                       >
-                        {["OPEN", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"].map((status) => (
+                        {[
+                          "DRAFT",
+                          "SUBMITTED",
+                          "MATCHED",
+                          "ACCEPTED",
+                          "PICKED_UP",
+                          "EN_ROUTE",
+                          "DELIVERED",
+                          "COMPLETED",
+                          "CANCELLED",
+                          "REJECTED"
+                        ].map((status) => (
                           <option key={status} value={status}>
                             {status}
                           </option>

@@ -1,11 +1,11 @@
 import bcrypt from "bcryptjs";
 import {
-  AnnouncementType,
   DeliveryJobStatus,
   InventoryStatus,
   OrderStatus,
-  Role,
+  RequestEventType,
   ServiceRequestStatus,
+  Role,
   PrismaClient
 } from "@prisma/client";
 
@@ -13,6 +13,14 @@ const prisma = new PrismaClient();
 
 async function main() {
   await prisma.$transaction([
+    prisma.dispute.deleteMany(),
+    prisma.voucherRedemption.deleteMany(),
+    prisma.voucher.deleteMany(),
+    prisma.wallet.deleteMany(),
+    prisma.orderHistory.deleteMany(),
+    prisma.favorite.deleteMany(),
+    prisma.serviceRequestEvent.deleteMany(),
+    prisma.driverProfile.deleteMany(),
     prisma.review.deleteMany(),
     prisma.deliveryJob.deleteMany(),
     prisma.orderItem.deleteMany(),
@@ -148,9 +156,15 @@ async function main() {
       title: "Water delivery for Section D",
       description: "Need 5 drums delivered before 5pm.",
       address: "Section D Community Hall",
-      status: ServiceRequestStatus.OPEN,
+      status: ServiceRequestStatus.SUBMITTED,
       residentId: resident.id,
-      categoryId: categories.find((category) => category.name === "Water")?.id ?? categories[0]!.id
+      categoryId: categories.find((category) => category.name === "Water")?.id ?? categories[0]!.id,
+      events: {
+        create: {
+          type: RequestEventType.SUBMITTED,
+          message: "Seeded request submitted."
+        }
+      }
     }
   });
 
@@ -195,23 +209,95 @@ async function main() {
     }
   });
 
+  await prisma.driverProfile.create({
+    data: {
+      userId: driver.id,
+      isAvailable: true,
+      vehicleType: "Motorbike",
+      ratingAvg: 4.9,
+      completedJobs: 28,
+      lastLat: -26.2041,
+      lastLng: 28.0473
+    }
+  });
+
+  await prisma.wallet.create({
+    data: {
+      userId: resident.id,
+      balanceCents: 5000
+    }
+  });
+
+  await prisma.voucher.create({
+    data: {
+      code: "WELCOME10",
+      description: "10% off your next delivery",
+      percentOff: 10,
+      maxUses: 100,
+      createdById: admin.id
+    }
+  });
+
+  await prisma.serviceRequest.createMany({
+    data: [
+      {
+        title: "Draft grocery pickup",
+        description: "Need maize meal and beans.",
+        address: "12 Pine Street · Soweto",
+        status: ServiceRequestStatus.DRAFT,
+        residentId: resident.id,
+        categoryId: categories[2]!.id
+      },
+      {
+        title: "Match gas delivery",
+        description: "Swap gas cylinder",
+        address: "88 Market Road · Johannesburg",
+        status: ServiceRequestStatus.MATCHED,
+        residentId: resident.id,
+        assignedDriverId: driver.id,
+        assignedAt: new Date(),
+        categoryId: categories[1]!.id
+      },
+      {
+        title: "En route water drums",
+        description: "Deliver 2 drums to community hall",
+        address: "Section D Community Hall",
+        status: ServiceRequestStatus.EN_ROUTE,
+        residentId: resident.id,
+        assignedDriverId: driver.id,
+        assignedAt: new Date(),
+        categoryId: categories[0]!.id
+      },
+      {
+        title: "Delivered handyman job",
+        description: "Fix leaking tap",
+        address: "12 Pine Street · Soweto",
+        status: ServiceRequestStatus.DELIVERED,
+        residentId: resident.id,
+        assignedBusinessId: business.id,
+        deliveredAt: new Date(),
+        categoryId: categories[3]!.id
+      }
+    ]
+  });
+
   await prisma.announcement.create({
     data: {
-      createdById: admin.id,
+      authorId: admin.id,
       title: "Bulk Grocery Restock Day",
       body: "Sisonke Spaza restocks bulk staples every Saturday at 9am.",
-      type: AnnouncementType.RESTOCK,
-      startsAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3)
+      category: "DEALS",
+      isPinned: true,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7)
     }
   });
 
   await prisma.announcement.create({
     data: {
-      createdById: admin.id,
+      authorId: admin.id,
       title: "Community Helper Meetup",
       body: "Join the monthly helper briefing at the community hall.",
-      type: AnnouncementType.COMMUNITY,
-      startsAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10)
+      category: "COMMUNITY"
     }
   });
 }

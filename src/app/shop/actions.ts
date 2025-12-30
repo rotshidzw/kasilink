@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { InventoryStatus } from "@prisma/client";
+import { DeliveryJobStatus, InventoryStatus, OrderStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/server/db";
@@ -135,7 +135,7 @@ export async function createOrder(formData: FormData) {
     data: {
       residentId: session.user.id,
       shopId: product.shopId,
-      status: "PENDING",
+      status: OrderStatus.PENDING,
       total,
       deliveryAddressId: address?.id,
       items: {
@@ -150,7 +150,7 @@ export async function createOrder(formData: FormData) {
       deliveryJob: {
         create: {
           otpCode,
-          status: "OPEN"
+          status: DeliveryJobStatus.OPEN
         }
       }
     }
