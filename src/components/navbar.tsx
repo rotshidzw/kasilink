@@ -4,6 +4,7 @@ import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { Menu, Sparkles, X } from "lucide-react";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { useLiteMode } from "@/components/lite-mode-toggle";
@@ -13,6 +14,23 @@ export function Navbar() {
   const { enabled, toggle } = useLiteMode();
   const role = session?.user?.role;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  const appShellRoutes = [
+    "/dashboard",
+    "/requests",
+    "/drivers",
+    "/events",
+    "/business",
+    "/driver",
+    "/admin",
+    "/shop",
+    "/callcenter"
+  ];
+
+  if (appShellRoutes.some((route) => pathname.startsWith(route))) {
+    return null;
+  }
 
   const navLinks = [
     { href: "/dashboard", label: "Dashboard", roles: ["RESIDENT", "BUSINESS", "DRIVER", "ADMIN"] },
