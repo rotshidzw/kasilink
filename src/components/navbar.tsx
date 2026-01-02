@@ -26,7 +26,7 @@ export function Navbar() {
   ];
 
   return (
-    <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
+    <header className="relative z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="container mx-auto flex items-center justify-between px-4 py-4">
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-slate-900">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-white">
@@ -69,7 +69,7 @@ export function Navbar() {
       </div>
       {isMenuOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/40 px-3 pt-3 md:hidden"
+          className="fixed inset-0 z-[60] flex items-start justify-center bg-white/95 px-3 pt-3 md:hidden"
           onClick={() => setIsMenuOpen(false)}
         >
           <div
