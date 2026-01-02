@@ -10,10 +10,18 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 export default async function HomePage() {
-  const [openRequests, openJobs] = await Promise.all([
-    prisma.serviceRequest.count({ where: { status: ServiceRequestStatus.SUBMITTED } }),
-    prisma.deliveryJob.count({ where: { status: DeliveryJobStatus.OPEN } })
-  ]);
+  let openRequests = 0;
+  let openJobs = 0;
+
+  try {
+    [openRequests, openJobs] = await Promise.all([
+      prisma.serviceRequest.count({ where: { status: ServiceRequestStatus.SUBMITTED } }),
+      prisma.deliveryJob.count({ where: { status: DeliveryJobStatus.OPEN } })
+    ]);
+  } catch {
+    openRequests = 0;
+    openJobs = 0;
+  }
 
   return (
     <div className="flex flex-col gap-10">
