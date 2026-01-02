@@ -46,6 +46,11 @@ export const authOptions: NextAuthOptions = {
           const { hashedPassword, ...safeUser } = user;
           return safeUser;
         } catch (error) {
+          const prismaError = error as { code?: string };
+          if (prismaError?.code === "P2021") {
+            console.warn("Credentials sign-in unavailable: database tables are missing.");
+            return null;
+          }
           console.error("Credentials sign-in failed. Check DATABASE_URL and database status.", error);
           return null;
         }
