@@ -68,8 +68,14 @@ export function Navbar() {
         </div>
       </div>
       {isMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/40 md:hidden">
-          <div className="fixed inset-x-0 top-0 m-3 rounded-3xl bg-white p-5 shadow-xl">
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/40 px-3 pt-3 md:hidden"
+          onClick={() => setIsMenuOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl bg-white p-5 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
               <div className="text-sm font-semibold text-slate-900">Menu</div>
               <button
@@ -81,7 +87,7 @@ export function Navbar() {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="mt-4 flex flex-col gap-3">
+            <div className="mt-4 flex max-h-[70vh] flex-col gap-3 overflow-y-auto pr-1">
               {navLinks
                 .filter((link) => !link.roles || (role && link.roles.includes(role)))
                 .map((link) => (
