@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
-import { Menu, Sparkles } from "lucide-react";
+import { Menu, Sparkles, X } from "lucide-react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useLiteMode } from "@/components/lite-mode-toggle";
@@ -11,6 +12,7 @@ export function Navbar() {
   const { data: session } = useSession();
   const { enabled, toggle } = useLiteMode();
   const role = session?.user?.role;
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
     { href: "/dashboard", label: "Dashboard", roles: ["RESIDENT", "BUSINESS", "DRIVER", "ADMIN"] },
@@ -60,36 +62,52 @@ export function Navbar() {
               Sign in
             </Link>
           )}
-          <details className="relative md:hidden">
-            <summary className="list-none">
-              <Button variant="outline" size="icon">
-                <Menu className="h-4 w-4" />
-              </Button>
-            </summary>
-            <div className="absolute right-0 mt-2 w-56 rounded-lg border border-slate-200 bg-white p-4 shadow-lg">
-              <div className="flex flex-col gap-3">
-                {navLinks
-                  .filter((link) => !link.roles || (role && link.roles.includes(role)))
-                  .map((link) => (
-                    <Link key={link.href} href={link.href} className="text-sm text-slate-700">
-                      {link.label}
-                    </Link>
-                  ))}
-                {session?.user && (
-                  <>
-                    <button type="button" className="text-left text-sm text-slate-700" onClick={toggle}>
-                      Lite mode: {enabled ? "On" : "Off"}
-                    </button>
-                    <button type="button" className="text-left text-sm text-slate-700" onClick={() => signOut()}>
-                      Sign out
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </details>
+          <Button variant="outline" size="icon" className="md:hidden" onClick={() => setIsMenuOpen(true)}>
+            <Menu className="h-4 w-4" />
+          </Button>
         </div>
       </div>
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/40 md:hidden">
+          <div className="fixed inset-x-0 top-0 m-3 rounded-3xl bg-white p-5 shadow-xl">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold text-slate-900">Menu</div>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-full border border-slate-200 p-2 text-slate-700"
+                onClick={() => setIsMenuOpen(false)}
+                aria-label="Close menu"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-4 flex flex-col gap-3">
+              {navLinks
+                .filter((link) => !link.roles || (role && link.roles.includes(role)))
+                .map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="text-sm font-medium text-slate-700"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              {session?.user && (
+                <>
+                  <button type="button" className="text-left text-sm text-slate-700" onClick={toggle}>
+                    Lite mode: {enabled ? "On" : "Off"}
+                  </button>
+                  <button type="button" className="text-left text-sm text-slate-700" onClick={() => signOut()}>
+                    Sign out
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
