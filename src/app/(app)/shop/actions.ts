@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { DeliveryJobStatus, InventoryStatus, OrderStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
@@ -131,7 +132,7 @@ export async function createOrder(formData: FormData) {
   const total = Number(product.price) * parsed.data.quantity;
   const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-  await prisma.order.create({
+  const order = await prisma.order.create({
     data: {
       residentId: session.user.id,
       shopId: product.shopId,
@@ -157,6 +158,7 @@ export async function createOrder(formData: FormData) {
   });
 
   revalidatePath("/shop");
+  redirect(`/shop/checkout?orderId=${order.id}`);
 }
 
 const inventorySchema = z.object({
