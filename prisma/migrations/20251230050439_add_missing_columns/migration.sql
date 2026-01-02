@@ -32,6 +32,9 @@ CREATE TYPE "ServiceRequestStatus_new" AS ENUM (
 );
 
 ALTER TABLE "ServiceRequest"
+  ALTER COLUMN "status" DROP DEFAULT;
+
+ALTER TABLE "ServiceRequest"
   ALTER COLUMN "status" TYPE "ServiceRequestStatus_new"
   USING ("status"::text::"ServiceRequestStatus_new");
 
