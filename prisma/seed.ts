@@ -42,7 +42,7 @@ async function main() {
     prisma.user.deleteMany()
   ]);
 
-  const passwordHash = await bcrypt.hash("password123", 10);
+  const passwordHash = await bcrypt.hash("Password123!", 10);
 
   const [resident, business, driver, admin] = await Promise.all([
     prisma.user.create({

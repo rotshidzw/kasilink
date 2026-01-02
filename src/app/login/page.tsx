@@ -84,7 +84,7 @@ export default function LoginPage() {
           </Button>
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
             <p className="font-semibold text-slate-900">Quick switch login</p>
-            <p className="mt-1 text-xs text-slate-500">Use password: password123</p>
+            <p className="mt-1 text-xs text-slate-500">Use password: Password123!</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {demoUsers.map((user) => (
                 <button
@@ -93,7 +93,7 @@ export default function LoginPage() {
                   className="rounded-md border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
                   onClick={() => {
                     setEmail(user.email);
-                    setPassword("password123");
+                    setPassword("Password123!");
                   }}
                 >
                   {user.label}
