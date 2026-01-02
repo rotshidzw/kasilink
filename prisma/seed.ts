@@ -12,35 +12,44 @@ import {
 const prisma = new PrismaClient();
 
 async function main() {
-  await prisma.$transaction([
-    prisma.dispute.deleteMany(),
-    prisma.voucherRedemption.deleteMany(),
-    prisma.voucher.deleteMany(),
-    prisma.wallet.deleteMany(),
-    prisma.orderHistory.deleteMany(),
-    prisma.favorite.deleteMany(),
-    prisma.serviceRequestEvent.deleteMany(),
-    prisma.driverProfile.deleteMany(),
-    prisma.review.deleteMany(),
-    prisma.deliveryJob.deleteMany(),
-    prisma.callbackTicket.deleteMany(),
-    prisma.voiceNoteRequest.deleteMany(),
-    prisma.orderItem.deleteMany(),
-    prisma.order.deleteMany(),
-    prisma.inventory.deleteMany(),
-    prisma.product.deleteMany(),
-    prisma.shop.deleteMany(),
-    prisma.serviceRequest.deleteMany(),
-    prisma.assistedContact.deleteMany(),
-    prisma.serviceCategory.deleteMany(),
-    prisma.announcement.deleteMany(),
-    prisma.address.deleteMany(),
-    prisma.profile.deleteMany(),
-    prisma.account.deleteMany(),
-    prisma.session.deleteMany(),
-    prisma.verificationToken.deleteMany(),
-    prisma.user.deleteMany()
-  ]);
+  try {
+    await prisma.$transaction([
+      prisma.dispute.deleteMany(),
+      prisma.voucherRedemption.deleteMany(),
+      prisma.voucher.deleteMany(),
+      prisma.wallet.deleteMany(),
+      prisma.orderHistory.deleteMany(),
+      prisma.favorite.deleteMany(),
+      prisma.serviceRequestEvent.deleteMany(),
+      prisma.driverProfile.deleteMany(),
+      prisma.review.deleteMany(),
+      prisma.deliveryJob.deleteMany(),
+      prisma.callbackTicket.deleteMany(),
+      prisma.voiceNoteRequest.deleteMany(),
+      prisma.orderItem.deleteMany(),
+      prisma.order.deleteMany(),
+      prisma.inventory.deleteMany(),
+      prisma.product.deleteMany(),
+      prisma.shop.deleteMany(),
+      prisma.serviceRequest.deleteMany(),
+      prisma.assistedContact.deleteMany(),
+      prisma.serviceCategory.deleteMany(),
+      prisma.announcement.deleteMany(),
+      prisma.address.deleteMany(),
+      prisma.profile.deleteMany(),
+      prisma.account.deleteMany(),
+      prisma.session.deleteMany(),
+      prisma.verificationToken.deleteMany(),
+      prisma.user.deleteMany()
+    ]);
+  } catch (error) {
+    const prismaError = error as { code?: string };
+    if (prismaError?.code === "P2021") {
+      console.warn("Seed skipped: database tables are missing. Run migrations before seeding.");
+      return;
+    }
+    throw error;
+  }
 
   const passwordHash = await bcrypt.hash("Password123!", 10);
 
