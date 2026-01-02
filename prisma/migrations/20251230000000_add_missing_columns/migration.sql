@@ -28,29 +28,36 @@ BEGIN
     SET "status" = 'DRAFT'
     WHERE "status" IS NULL;
 
-    BEGIN
-      ALTER TABLE "ServiceRequest"
-        ADD CONSTRAINT "ServiceRequest_assignedDriverId_fkey"
-        FOREIGN KEY ("assignedDriverId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-    EXCEPTION
-      WHEN duplicate_object THEN NULL;
-    END;
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name = 'User'
+    ) THEN
+      BEGIN
+        ALTER TABLE "ServiceRequest"
+          ADD CONSTRAINT "ServiceRequest_assignedDriverId_fkey"
+          FOREIGN KEY ("assignedDriverId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+      EXCEPTION
+        WHEN duplicate_object THEN NULL;
+      END;
 
-    BEGIN
-      ALTER TABLE "ServiceRequest"
-        ADD CONSTRAINT "ServiceRequest_assignedBusinessId_fkey"
-        FOREIGN KEY ("assignedBusinessId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-    EXCEPTION
-      WHEN duplicate_object THEN NULL;
-    END;
+      BEGIN
+        ALTER TABLE "ServiceRequest"
+          ADD CONSTRAINT "ServiceRequest_assignedBusinessId_fkey"
+          FOREIGN KEY ("assignedBusinessId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+      EXCEPTION
+        WHEN duplicate_object THEN NULL;
+      END;
 
-    BEGIN
-      ALTER TABLE "ServiceRequest"
-        ADD CONSTRAINT "ServiceRequest_updatedById_fkey"
-        FOREIGN KEY ("updatedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-    EXCEPTION
-      WHEN duplicate_object THEN NULL;
-    END;
+      BEGIN
+        ALTER TABLE "ServiceRequest"
+          ADD CONSTRAINT "ServiceRequest_updatedById_fkey"
+          FOREIGN KEY ("updatedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+      EXCEPTION
+        WHEN duplicate_object THEN NULL;
+      END;
+    END IF;
   END IF;
 END $$;
 
@@ -70,11 +77,20 @@ CREATE TABLE IF NOT EXISTS "AssistedContact" (
 
 DO $$
 BEGIN
-  ALTER TABLE "AssistedContact"
-    ADD CONSTRAINT "AssistedContact_createdById_fkey"
-    FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-EXCEPTION
-  WHEN duplicate_object THEN NULL;
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name = 'User'
+  ) THEN
+    BEGIN
+      ALTER TABLE "AssistedContact"
+        ADD CONSTRAINT "AssistedContact_createdById_fkey"
+        FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    EXCEPTION
+      WHEN duplicate_object THEN NULL;
+    END;
+  END IF;
 END $$;
 
 DO $$
@@ -123,13 +139,20 @@ END $$;
 
 DO $$
 BEGIN
-  IF NOT EXISTS (
+  IF EXISTS (
     SELECT 1
-    FROM pg_constraint
-    WHERE conname = 'Announcement_authorId_fkey'
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name = 'User'
   ) THEN
-    ALTER TABLE "Announcement"
-      ADD CONSTRAINT "Announcement_authorId_fkey"
-      FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    IF NOT EXISTS (
+      SELECT 1
+      FROM pg_constraint
+      WHERE conname = 'Announcement_authorId_fkey'
+    ) THEN
+      ALTER TABLE "Announcement"
+        ADD CONSTRAINT "Announcement_authorId_fkey"
+        FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
   END IF;
 END $$;
