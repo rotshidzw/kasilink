@@ -22,13 +22,10 @@ export function AppShellClient({ role, navItems, children }: AppShellClientProps
   const pathname = usePathname();
   const { lowDataMode, largeText, language, setLanguage, setLowDataMode, setLargeText, t } = usePreferences();
 
-  const bottomNav: Array<
-    | { href: string; label: string; icon: LucideIcon; external?: false }
-    | { href: string; label: string; external: true }
-  > = [
+  const bottomNav: Array<{ href: string; label: string; icon: LucideIcon; external?: boolean }> = [
     { href: "/dashboard", label: t("home"), icon: Home },
     { href: "/requests", label: t("requests"), icon: PhoneCall },
-    { href: supportWhatsApp, label: t("whatsapp"), external: true },
+    { href: supportWhatsApp, label: t("whatsapp"), icon: MessageCircle, external: true },
     { href: "/dashboard", label: t("account"), icon: User }
   ];
 
@@ -107,7 +104,7 @@ export function AppShellClient({ role, navItems, children }: AppShellClientProps
         {bottomNav.map((item) =>
           item.external ? (
             <Link
-              key={item.href}
+              key={`${item.href}-${item.label}`}
               href={item.href}
               target="_blank"
               className={cn(
@@ -115,12 +112,12 @@ export function AppShellClient({ role, navItems, children }: AppShellClientProps
                 "rounded-full px-2 py-2"
               )}
             >
-              <MessageCircle className="h-4 w-4" />
+              <item.icon className="h-4 w-4" />
               {item.label}
             </Link>
           ) : (
             <Link
-              key={item.href}
+              key={`${item.href}-${item.label}`}
               href={item.href}
               className={cn(
                 "flex flex-1 flex-col items-center justify-center text-xs text-slate-600",
