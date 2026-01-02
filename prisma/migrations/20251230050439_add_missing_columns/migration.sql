@@ -18,28 +18,36 @@ SET "status" = 'SUBMITTED'
 WHERE "status"::text IN ('OPEN', 'ASSIGNED', 'IN_PROGRESS');
 
 -- Replace enum to remove legacy values
-CREATE TYPE "ServiceRequestStatus_new" AS ENUM (
-  'DRAFT',
-  'SUBMITTED',
-  'MATCHED',
-  'ACCEPTED',
-  'PICKED_UP',
-  'EN_ROUTE',
-  'DELIVERED',
-  'COMPLETED',
-  'CANCELLED',
-  'REJECTED'
-);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'ServiceRequest')
+    AND EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ServiceRequestStatus') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ServiceRequestStatus_new') THEN
+      CREATE TYPE "ServiceRequestStatus_new" AS ENUM (
+        'DRAFT',
+        'SUBMITTED',
+        'MATCHED',
+        'ACCEPTED',
+        'PICKED_UP',
+        'EN_ROUTE',
+        'DELIVERED',
+        'COMPLETED',
+        'CANCELLED',
+        'REJECTED'
+      );
+    END IF;
 
-ALTER TABLE "ServiceRequest"
-  ALTER COLUMN "status" DROP DEFAULT,
-  ALTER COLUMN "status" TYPE "ServiceRequestStatus_new"
-  USING ("status"::text::"ServiceRequestStatus_new");
+    ALTER TABLE "ServiceRequest"
+      ALTER COLUMN "status" DROP DEFAULT,
+      ALTER COLUMN "status" TYPE "ServiceRequestStatus_new"
+      USING ("status"::text::"ServiceRequestStatus_new");
 
-ALTER TYPE "ServiceRequestStatus" RENAME TO "ServiceRequestStatus_old";
-ALTER TYPE "ServiceRequestStatus_new" RENAME TO "ServiceRequestStatus";
+    ALTER TYPE "ServiceRequestStatus" RENAME TO "ServiceRequestStatus_old";
+    ALTER TYPE "ServiceRequestStatus_new" RENAME TO "ServiceRequestStatus";
 
-DROP TYPE "ServiceRequestStatus_old";
+    DROP TYPE "ServiceRequestStatus_old";
 
-ALTER TABLE "ServiceRequest"
-  ALTER COLUMN "status" SET DEFAULT 'DRAFT';
+    ALTER TABLE "ServiceRequest"
+      ALTER COLUMN "status" SET DEFAULT 'DRAFT';
+  END IF;
+END $$;
