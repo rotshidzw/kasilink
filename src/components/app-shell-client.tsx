@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MessageCircle, PhoneCall } from "lucide-react";
+import { Home, MessageCircle, PhoneCall, User, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -22,11 +22,14 @@ export function AppShellClient({ role, navItems, children }: AppShellClientProps
   const pathname = usePathname();
   const { lowDataMode, largeText, language, setLanguage, setLowDataMode, setLargeText, t } = usePreferences();
 
-  const bottomNav = [
-    { href: "/dashboard", label: t("home") },
-    { href: "/requests", label: t("requests") },
+  const bottomNav: Array<
+    | { href: string; label: string; icon: LucideIcon; external?: false }
+    | { href: string; label: string; external: true }
+  > = [
+    { href: "/dashboard", label: t("home"), icon: Home },
+    { href: "/requests", label: t("requests"), icon: PhoneCall },
     { href: supportWhatsApp, label: t("whatsapp"), external: true },
-    { href: "/dashboard", label: t("account") }
+    { href: "/dashboard", label: t("account"), icon: User }
   ];
 
   return (
@@ -125,7 +128,7 @@ export function AppShellClient({ role, navItems, children }: AppShellClientProps
                 pathname === item.href && "bg-slate-100 text-slate-900"
               )}
             >
-              <PhoneCall className="h-4 w-4" />
+              <item.icon className="h-4 w-4" />
               {item.label}
             </Link>
           )
