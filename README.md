@@ -62,7 +62,7 @@ Use the dev simulator endpoint in development to inject messages without Meta:
 `POST /api/whatsapp/dev-simulate` with `{ "phone": "+2782...", "text": "water address: 12 Main St" }`.
 
 ## Prisma notes (Windows)
-If Prisma generate or migrate fails on Windows with EPERM errors, stop the Next.js dev server before running:
+If Prisma generate or migrate fails on Windows with EPERM errors (for example, `rename query_engine-windows.dll.node`), stop the Next.js dev server before running:
 ```bash
 npm run prisma:generate
 npm run prisma:migrate
