@@ -78,6 +78,10 @@ export default async function AdminWhatsAppInboxPage({ searchParams }: WhatsAppI
       <Card>
         <CardHeader className="space-y-3">
           <CardTitle>Message history</CardTitle>
+          <p className="text-xs text-slate-500">
+            Tip: outbound messages appear after sending a test message; inbound messages appear after using the dev
+            simulator or webhook.
+          </p>
           <div className="flex flex-wrap items-center gap-3">
             {directionOptions.map((option) => {
               const href = new URLSearchParams();
@@ -132,7 +136,32 @@ export default async function AdminWhatsAppInboxPage({ searchParams }: WhatsAppI
                 {messages.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-sm text-slate-500">
-                      No WhatsApp messages yet.
+                      {direction === "INBOUND" ? (
+                        <span>
+                          No inbound messages yet.{" "}
+                          <Link className="font-semibold text-slate-700" href="/admin/whatsapp">
+                            Show all
+                          </Link>{" "}
+                          or{" "}
+                          <Link
+                            className="font-semibold text-slate-700"
+                            href="/admin/whatsapp?direction=OUTBOUND"
+                          >
+                            view outbound
+                          </Link>
+                          .
+                        </span>
+                      ) : direction === "OUTBOUND" ? (
+                        <span>
+                          No outbound messages yet. Try the test form above or{" "}
+                          <Link className="font-semibold text-slate-700" href="/admin/whatsapp">
+                            show all
+                          </Link>
+                          .
+                        </span>
+                      ) : (
+                        "No WhatsApp messages yet."
+                      )}
                     </TableCell>
                   </TableRow>
                 ) : (
