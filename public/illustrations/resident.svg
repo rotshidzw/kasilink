@@ -1,0 +1,10 @@
+<svg width="360" height="260" viewBox="0 0 360 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="360" height="260" rx="28" fill="#F8FAFC"/>
+  <circle cx="100" cy="90" r="44" fill="#E2E8F0"/>
+  <rect x="170" y="60" width="140" height="14" rx="7" fill="#94A3B8"/>
+  <rect x="170" y="86" width="110" height="12" rx="6" fill="#CBD5F5"/>
+  <rect x="60" y="150" width="240" height="70" rx="18" fill="#E0F2FE"/>
+  <rect x="80" y="170" width="120" height="10" rx="5" fill="#38BDF8"/>
+  <rect x="80" y="190" width="160" height="10" rx="5" fill="#94A3B8"/>
+  <text x="80" y="230" fill="#0F172A" font-family="Arial" font-size="14">Resident feed</text>
+</svg>

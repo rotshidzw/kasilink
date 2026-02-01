@@ -1,0 +1,8 @@
+<svg width="520" height="320" viewBox="0 0 520 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="520" height="320" rx="24" fill="#E2E8F0"/>
+  <path d="M60 80C120 40 200 40 260 80C320 120 400 120 460 80" stroke="#94A3B8" stroke-width="6" stroke-linecap="round"/>
+  <path d="M60 220C120 180 200 180 260 220C320 260 400 260 460 220" stroke="#94A3B8" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="140" cy="110" r="10" fill="#0EA5E9"/>
+  <circle cx="380" cy="200" r="10" fill="#0EA5E9"/>
+  <text x="180" y="170" fill="#475569" font-family="Arial" font-size="16">Map preview</text>
+</svg>

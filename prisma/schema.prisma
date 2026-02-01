@@ -1,0 +1,484 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  RESIDENT
+  BUSINESS
+  DRIVER
+  ADMIN
+  CALLCENTER
+}
+
+enum ServiceRequestStatus {
+  DRAFT
+  SUBMITTED
+  MATCHED
+  ACCEPTED
+  PICKED_UP
+  EN_ROUTE
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+enum RequestEventType {
+  CREATED
+  SUBMITTED
+  DRIVER_ASSIGNED
+  BUSINESS_ASSIGNED
+  STATUS_CHANGED
+  CANCELLED
+  COMPLETED
+  NOTE
+  DISPUTE_OPENED
+  DISPUTE_RESOLVED
+  VOUCHER_APPLIED
+  PROOF_UPLOADED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PACKING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum DeliveryJobStatus {
+  OPEN
+  ASSIGNED
+  EN_ROUTE
+  PICKED_UP
+  DELIVERED
+  CANCELLED
+}
+
+enum InventoryStatus {
+  IN_STOCK
+  LOW
+  OUT_OF_STOCK
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED_REFUND
+  RESOLVED_VOUCHER
+  RESOLVED_REJECTED
+  CLOSED
+}
+
+enum CallbackStatus {
+  OPEN
+  DONE
+}
+
+enum VoiceNoteStatus {
+  NEW
+  TRANSCRIBED
+  CREATED_REQUEST
+}
+
+model User {
+  id             String          @id @default(cuid())
+  name           String?
+  email          String          @unique
+  hashedPassword String
+  role           Role            @default(RESIDENT)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  profile        Profile?
+  addresses      Address[]
+  shops          Shop[]
+  requests       ServiceRequest[] @relation("ResidentRequests")
+  assignedDriverRequests ServiceRequest[] @relation("AssignedDriver")
+  assignedBusinessRequests ServiceRequest[] @relation("AssignedBusiness")
+  createdByStaffRequests ServiceRequest[] @relation("CreatedByStaff")
+  orders         Order[]
+  deliveryJobs   DeliveryJob[]    @relation("DriverJobs")
+  reviewsWritten Review[]         @relation("ReviewsWritten")
+  reviewsReceived Review[]        @relation("ReviewsReceived")
+  announcements  Announcement[]  @relation("AnnouncementAuthor")
+  driverProfile DriverProfile?
+  preferences  UserPreferences?
+  assistedContacts AssistedContact[]
+  callbackTickets CallbackTicket[] @relation("CallbackResolvedBy")
+  voiceNoteRequests VoiceNoteRequest[] @relation("VoiceNoteHandledBy")
+  favorites      Favorite[]
+  wallet         Wallet?
+  disputesOpened Dispute[]        @relation("DisputesOpened")
+  disputesAssigned Dispute[]      @relation("DisputesAssigned")
+  createdVouchers Voucher[]       @relation("VoucherCreator")
+  voucherRedemptions VoucherRedemption[]
+  requestEvents  ServiceRequestEvent[] @relation("RequestEventActor")
+  updatedRequests ServiceRequest[] @relation("RequestUpdatedBy")
+  orderHistory   OrderHistory[]
+  accounts       Account[]
+  sessions       Session[]
+}
+
+model UserPreferences {
+  id           String  @id @default(cuid())
+  userId       String  @unique
+  lowDataMode  Boolean @default(false)
+  largeText    Boolean @default(false)
+  language     String  @default("EN")
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Profile {
+  id     String  @id @default(cuid())
+  userId String  @unique
+  phone  String?
+  bio    String?
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  userId     String
+  label      String?
+  line1      String
+  line2      String?
+  city       String
+  province   String?
+  postalCode String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders     Order[]
+}
+
+model Shop {
+  id         String    @id @default(cuid())
+  ownerId    String
+  name       String
+  description String?
+  phone      String?
+  line1      String
+  line2      String?
+  city       String
+  province   String?
+  postalCode String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  owner      User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  products   Product[]
+  orders     Order[]
+  reviews    Review[]
+}
+
+model Product {
+  id          String     @id @default(cuid())
+  shopId      String
+  name        String
+  description String?
+  price       Decimal    @db.Decimal(10, 2)
+  unit        String
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  shop        Shop       @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  inventory   Inventory?
+  orderItems  OrderItem[]
+}
+
+model Inventory {
+  id        String          @id @default(cuid())
+  productId String          @unique
+  status    InventoryStatus @default(IN_STOCK)
+  quantity  Int             @default(0)
+  restockAt DateTime?
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ServiceCategory {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  icon        String?
+  requests    ServiceRequest[]
+}
+
+model ServiceRequest {
+  id          String               @id @default(cuid())
+  title       String
+  description String
+  address     String
+  status      ServiceRequestStatus @default(DRAFT)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  residentId  String?
+  contactId   String?
+  createdByStaffId String?
+  assignedDriverId String?
+  assignedBusinessId String?
+  assignedAt DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
+  deliveredAt DateTime?
+  priceEstimateCents Int?
+  deliveryFeeCents Int?
+  proofOfDeliveryUrl String?
+  deliveryOtp String?
+  updatedById String?
+  categoryId  String
+  verifiedByCall Boolean           @default(false)
+  resident    User?                @relation("ResidentRequests", fields: [residentId], references: [id], onDelete: Cascade)
+  contact     AssistedContact?     @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  createdByStaff User?             @relation("CreatedByStaff", fields: [createdByStaffId], references: [id], onDelete: SetNull)
+  assignedDriver  User?                @relation("AssignedDriver", fields: [assignedDriverId], references: [id])
+  assignedBusiness User?               @relation("AssignedBusiness", fields: [assignedBusinessId], references: [id])
+  updatedBy User?                      @relation("RequestUpdatedBy", fields: [updatedById], references: [id])
+  category    ServiceCategory      @relation(fields: [categoryId], references: [id])
+  deliveryJob DeliveryJob?
+  events      ServiceRequestEvent[]
+  disputes    Dispute[]
+  favorites   Favorite[]
+  orderHistory       OrderHistory[]
+  voucherRedemptions VoucherRedemption[]
+}
+
+model ServiceRequestEvent {
+  id        String            @id @default(cuid())
+  requestId String
+  actorId   String?
+  type      RequestEventType
+  message   String?
+  createdAt DateTime          @default(now())
+  request   ServiceRequest    @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  actor     User?             @relation("RequestEventActor", fields: [actorId], references: [id])
+
+  @@index([requestId, createdAt])
+}
+
+model AssistedContact {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String
+  area        String
+  addressNote String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  requests    ServiceRequest[]
+}
+
+model CallbackTicket {
+  id               String         @id @default(cuid())
+  phone            String
+  name             String?
+  area             String?
+  notes            String?
+  status           CallbackStatus @default(OPEN)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  resolvedByUserId String?
+  resolvedBy       User?          @relation("CallbackResolvedBy", fields: [resolvedByUserId], references: [id], onDelete: SetNull)
+}
+
+model VoiceNoteRequest {
+  id                String          @id @default(cuid())
+  phone             String
+  whatsappMessageId String?
+  audioUrl          String?
+  transcript        String?
+  language          String?
+  status            VoiceNoteStatus @default(NEW)
+  createdAt         DateTime        @default(now())
+  handledByUserId   String?
+  handledBy         User?           @relation("VoiceNoteHandledBy", fields: [handledByUserId], references: [id], onDelete: SetNull)
+}
+
+model DriverProfile {
+  userId        String  @id
+  isAvailable   Boolean @default(true)
+  vehicleType   String?
+  ratingAvg     Float   @default(5)
+  completedJobs Int     @default(0)
+  lastLat       Float?
+  lastLng       Float?
+  updatedAt     DateTime @updatedAt
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  requestId String?
+  type      String
+  label     String
+  payload   Json
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  request   ServiceRequest? @relation(fields: [requestId], references: [id], onDelete: Cascade)
+}
+
+model OrderHistory {
+  id        String         @id @default(cuid())
+  userId    String
+  requestId String
+  createdAt DateTime       @default(now())
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  request   ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+}
+
+model Wallet {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  balanceCents Int      @default(0)
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Voucher {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  description    String?
+  amountOffCents Int?
+  percentOff     Int?
+  maxUses        Int?
+  uses           Int      @default(0)
+  active         Boolean  @default(true)
+  expiresAt      DateTime?
+  createdAt      DateTime @default(now())
+  createdById    String?
+  createdBy      User?    @relation("VoucherCreator", fields: [createdById], references: [id])
+  redemptions    VoucherRedemption[]
+}
+
+model VoucherRedemption {
+  id         String   @id @default(cuid())
+  voucherId  String
+  userId     String
+  requestId  String?
+  createdAt  DateTime @default(now())
+  voucher    Voucher  @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  request    ServiceRequest? @relation(fields: [requestId], references: [id], onDelete: Cascade)
+}
+
+model Dispute {
+  id             String        @id @default(cuid())
+  requestId      String
+  openedById     String
+  assignedAdminId String?
+  status         DisputeStatus @default(OPEN)
+  reason         String
+  details        String?
+  resolutionNote String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  request        ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  openedBy       User           @relation("DisputesOpened", fields: [openedById], references: [id])
+  assignedAdmin  User?          @relation("DisputesAssigned", fields: [assignedAdminId], references: [id])
+}
+
+model Order {
+  id               String      @id @default(cuid())
+  residentId       String
+  shopId           String
+  status           OrderStatus @default(PENDING)
+  total            Decimal     @db.Decimal(10, 2)
+  deliveryAddressId String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  resident         User        @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  shop             Shop        @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  deliveryAddress  Address?    @relation(fields: [deliveryAddressId], references: [id])
+  items            OrderItem[]
+  deliveryJob      DeliveryJob?
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Decimal  @db.Decimal(10, 2)
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+model DeliveryJob {
+  id         String            @id @default(cuid())
+  orderId    String?           @unique
+  requestId  String?           @unique
+  driverId   String?
+  status     DeliveryJobStatus @default(OPEN)
+  otpCode    String
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  order      Order?            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  request    ServiceRequest?   @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  driver     User?             @relation("DriverJobs", fields: [driverId], references: [id])
+}
+
+model Review {
+  id             String   @id @default(cuid())
+  rating         Int
+  comment        String?
+  reviewerId     String
+  reviewedUserId String?
+  shopId         String?
+  createdAt      DateTime @default(now())
+  reviewer       User     @relation("ReviewsWritten", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewedUser   User?    @relation("ReviewsReceived", fields: [reviewedUserId], references: [id])
+  shop           Shop?    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  authorId    String?
+  title       String
+  body        String
+  category    String
+  isPinned    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime?
+  author      User?     @relation("AnnouncementAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}

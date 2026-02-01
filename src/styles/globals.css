@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-slate-50 text-slate-900;
+}
+
+.low-data .decorative-image {
+  display: none;
+}
+
+.large-text {
+  font-size: 18px;
+}
+
+html[data-lite="true"] body {
+  @apply bg-white;
+}
