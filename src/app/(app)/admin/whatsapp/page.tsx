@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 
 import { TestWhatsAppForm } from "./test-whatsapp-form";
+import { SimulateInboundForm } from "./simulate-inbound-form";
 
 type WhatsAppInboxPageProps = {
   searchParams?: { direction?: string; phone?: string };
@@ -71,7 +72,10 @@ export default async function AdminWhatsAppInboxPage({ searchParams }: WhatsAppI
           <CardTitle>Send test WhatsApp</CardTitle>
         </CardHeader>
         <CardContent>
-          <TestWhatsAppForm requests={recentRequests} />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <TestWhatsAppForm requests={recentRequests} />
+            <SimulateInboundForm />
+          </div>
         </CardContent>
       </Card>
 
