@@ -24,6 +24,10 @@ export default withAuth(
       return NextResponse.redirect(new URL("/", req.url));
     }
 
+    if (pathname.startsWith("/callcenter") && !roleGate(["CALLCENTER", "ADMIN"])) {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+
     if (pathname.startsWith("/requests/new") && !roleGate(["RESIDENT"])) {
       return NextResponse.redirect(new URL("/requests", req.url));
     }
@@ -44,6 +48,7 @@ export const config = {
     "/shop/:path*",
     "/business/:path*",
     "/driver/:path*",
+    "/callcenter/:path*",
     "/admin/:path*"
   ]
 };

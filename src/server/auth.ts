@@ -46,6 +46,11 @@ export const authOptions: NextAuthOptions = {
           const { hashedPassword, ...safeUser } = user;
           return safeUser;
         } catch (error) {
+          const prismaError = error as { code?: string };
+          if (prismaError?.code === "P2021") {
+            console.warn("Credentials sign-in unavailable: database tables are missing.");
+            return null;
+          }
           console.error("Credentials sign-in failed. Check DATABASE_URL and database status.", error);
           return null;
         }
@@ -56,7 +61,13 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+      }
+      if (token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { role: true }
+        });
+        token.role = dbUser?.role;
       }
       return token;
     },
