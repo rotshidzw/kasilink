@@ -247,6 +247,7 @@ model ServiceRequest {
   favorites   Favorite[]
   orderHistory       OrderHistory[]
   voucherRedemptions VoucherRedemption[]
+  whatsappMessages   WhatsappMessage[]
 }
 
 model ServiceRequestEvent {
@@ -305,17 +306,23 @@ model WhatsappLink {
 
 model WhatsappMessage {
   id         String   @id @default(cuid())
-  direction  String
-  phoneE164  String
-  messageId  String?
-  text       String?
-  mediaUrl   String?
-  mediaType  String?
-  status     String?
-  rawPayload Json
+  to         String
+  from       String?
+  direction  String   @default("OUTBOUND")
+  template   String?
+  body       String
+  status     String   @default("SENT")
+  provider   String   @default("stub")
+  requestId  String?
+  orderId    String?
   createdAt  DateTime @default(now())
 
-  @@index([phoneE164, createdAt])
+  request ServiceRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  order   Order?          @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([to])
+  @@index([direction])
 }
 
 model VoiceNoteRequest {
@@ -429,6 +436,7 @@ model Order {
   deliveryAddress  Address?    @relation(fields: [deliveryAddressId], references: [id])
   items            OrderItem[]
   deliveryJob      DeliveryJob?
+  whatsappMessages WhatsappMessage[]
 }
 
 model OrderItem {

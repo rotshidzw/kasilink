@@ -31,6 +31,12 @@ export default async function RequestDetailsPage({ params }: { params: { id: str
     }
   });
 
+  const whatsappMessages = await prisma.whatsappMessage.findMany({
+    where: { requestId: params.id },
+    orderBy: { createdAt: "desc" },
+    take: 10
+  });
+
   if (!request) {
     redirect("/requests");
   }
@@ -307,6 +313,29 @@ export default async function RequestDetailsPage({ params }: { params: { id: str
                 )}
               </div>
             ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>WhatsApp updates</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-slate-600">
+            {whatsappMessages.length === 0 ? (
+              <p className="text-sm text-slate-600">No WhatsApp updates yet.</p>
+            ) : (
+              whatsappMessages.map((message) => (
+                <div key={message.id} className="rounded-lg border border-slate-200 p-3 text-xs text-slate-600">
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold text-slate-900">{message.direction}</p>
+                    <span className="text-[10px] text-slate-400">{message.createdAt.toLocaleString()}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500">To: {message.to}</p>
+                  {message.from && <p className="text-xs text-slate-500">From: {message.from}</p>}
+                  <p className="mt-2 text-xs text-slate-700">{message.body}</p>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
 

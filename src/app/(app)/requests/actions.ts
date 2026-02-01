@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
-import { sendWhatsAppMessage } from "@/server/notifications/whatsapp";
+import { notifyRequestEvent } from "@/server/whatsapp";
 
 const requiredStringField = (minLength: number, message: string) =>
   z.preprocess((value) => (typeof value === "string" ? value : ""), z.string().min(minLength, message));
@@ -52,7 +52,7 @@ export async function createServiceRequest(prevState: RequestState, formData: Fo
     return { error: parsed.error.errors[0]?.message ?? "Invalid input." };
   }
 
-  await prisma.serviceRequest.create({
+  const createdRequest = await prisma.serviceRequest.create({
     data: {
       title: parsed.data.title,
       description: parsed.data.description,
@@ -76,9 +76,11 @@ export async function createServiceRequest(prevState: RequestState, formData: Fo
   });
 
   if (resident?.profile?.phone) {
-    await sendWhatsAppMessage({
-      to: resident.profile.phone,
-      message: "KasiLink: Your request has been submitted. We will update you shortly."
+    await notifyRequestEvent({
+      requestId: createdRequest.id,
+      eventType: "REQUEST_SUBMITTED",
+      toPhone: resident.profile.phone,
+      message: `Request submitted: ${createdRequest.title} (ID: ${createdRequest.id.slice(-6).toUpperCase()})`
     });
   }
 

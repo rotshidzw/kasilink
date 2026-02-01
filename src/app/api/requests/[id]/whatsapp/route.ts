@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
-import { getWhatsAppProvider } from "@/server/whatsapp";
+import { sendWhatsApp } from "@/server/whatsapp";
 import { normalizePhoneE164 } from "@/server/whatsapp/phone";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
@@ -34,27 +34,11 @@ export async function POST(request: Request, { params }: { params: { id: string 
   }
 
   const phoneE164 = normalizePhoneE164(phone);
-  const provider = getWhatsAppProvider();
-  let status = "SENT";
-  let messageId: string | undefined;
-
-  try {
-    const result = await provider.sendText({ to: phoneE164, text: message });
-    messageId = result.messageId;
-  } catch (error) {
-    status = "FAILED";
-    console.error("WhatsApp send failed", error);
-  }
-
-  await prisma.whatsappMessage.create({
-    data: {
-      direction: "OUT",
-      phoneE164,
-      messageId,
-      text: message,
-      status,
-      rawPayload: { requestId: params.id, source: "admin-request" }
-    }
+  await sendWhatsApp({
+    to: phoneE164,
+    body: message,
+    template: "ADMIN_UPDATE",
+    requestId: params.id
   });
   return NextResponse.json({ ok: true });
 }

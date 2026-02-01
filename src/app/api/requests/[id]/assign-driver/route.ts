@@ -3,6 +3,7 @@ import { DeliveryJobStatus, RequestEventType, ServiceRequestStatus } from "@pris
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
+import { notifyRequestEvent, sendWhatsApp } from "@/server/whatsapp";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerAuthSession();
@@ -36,7 +37,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  await prisma.serviceRequest.update({
+  const updatedRequest = await prisma.serviceRequest.update({
     where: { id: params.id },
     data: {
       assignedDriverId: driverId,
@@ -63,8 +64,37 @@ export async function POST(request: Request, { params }: { params: { id: string 
           actorId: session.user.id
         }
       }
+    },
+    include: {
+      resident: { include: { profile: true } },
+      contact: true,
+      assignedDriver: { include: { profile: true } }
     }
   });
+
+  const driverPhone = updatedRequest.assignedDriver?.profile?.phone;
+  if (driverPhone) {
+    await sendWhatsApp({
+      to: driverPhone,
+      body: `New job assigned: ${updatedRequest.title} pickup: ${updatedRequest.address}`,
+      template: "DRIVER_ASSIGNED",
+      requestId: updatedRequest.id
+    });
+  }
+
+  const residentPhone = updatedRequest.resident?.profile?.phone ?? updatedRequest.contact?.phone;
+  const driverName =
+    updatedRequest.assignedDriver?.name ??
+    updatedRequest.assignedDriver?.email ??
+    "your driver";
+  if (residentPhone) {
+    await notifyRequestEvent({
+      requestId: updatedRequest.id,
+      eventType: "DRIVER_ASSIGNED",
+      toPhone: residentPhone,
+      message: `Driver assigned: ${driverName}`
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

@@ -1,5 +1,4 @@
-import { prisma } from "@/server/db";
-import { getWhatsAppProvider } from "./";
+import { sendWhatsApp } from "./provider";
 
 type StatusUpdateParams = {
   phoneE164: string;
@@ -14,37 +13,13 @@ type DriverAssignedParams = {
 };
 
 export async function notifyContactRequestStatus({ phoneE164, requestId, status }: StatusUpdateParams) {
-  const provider = getWhatsAppProvider();
   const text = `Update ✅ Your request ${requestId.slice(-6).toUpperCase()} is now ${status}.`;
 
-  const { messageId } = await provider.sendText({ to: phoneE164, text });
-
-  await prisma.whatsappMessage.create({
-    data: {
-      direction: "OUT",
-      phoneE164,
-      messageId,
-      text,
-      status: "SENT",
-      rawPayload: { requestId, status }
-    }
-  });
+  await sendWhatsApp({ to: phoneE164, body: text, template: "STATUS_UPDATE", requestId });
 }
 
 export async function notifyDriverAssigned({ phoneE164, requestId, driverName }: DriverAssignedParams) {
-  const provider = getWhatsAppProvider();
   const text = `Driver assigned ✅ ${driverName} is on it. Ref: ${requestId.slice(-6).toUpperCase()}.`;
 
-  const { messageId } = await provider.sendText({ to: phoneE164, text });
-
-  await prisma.whatsappMessage.create({
-    data: {
-      direction: "OUT",
-      phoneE164,
-      messageId,
-      text,
-      status: "SENT",
-      rawPayload: { requestId, driverName }
-    }
-  });
+  await sendWhatsApp({ to: phoneE164, body: text, template: "DRIVER_ASSIGNED", requestId });
 }

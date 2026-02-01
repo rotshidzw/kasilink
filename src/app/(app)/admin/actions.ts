@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
+import { notifyRequestEvent, sendWhatsApp } from "@/server/whatsapp";
 
 const requestSchema = z.object({
   requestId: z.string().cuid(),
@@ -60,7 +61,7 @@ export async function updateRequestStatus(formData: FormData) {
     return;
   }
 
-  await prisma.serviceRequest.update({
+  const updatedRequest = await prisma.serviceRequest.update({
     where: { id: parsed.data.requestId },
     data: {
       status: parsed.data.status,
@@ -72,8 +73,19 @@ export async function updateRequestStatus(formData: FormData) {
           actorId: session.user.id
         }
       }
-    }
+    },
+    include: { resident: { include: { profile: true } }, contact: true }
   });
+
+  const phone = updatedRequest.resident?.profile?.phone ?? updatedRequest.contact?.phone;
+  if (phone) {
+    await notifyRequestEvent({
+      requestId: updatedRequest.id,
+      eventType: "STATUS_UPDATE",
+      toPhone: phone,
+      message: `Status update: ${parsed.data.status}`
+    });
+  }
 
   revalidatePath("/admin");
 }
@@ -139,7 +151,7 @@ export async function assignDriver(formData: FormData) {
     return;
   }
 
-  await prisma.serviceRequest.update({
+  const updatedRequest = await prisma.serviceRequest.update({
     where: { id: parsed.data.requestId },
     data: {
       status: ServiceRequestStatus.MATCHED,
@@ -165,8 +177,37 @@ export async function assignDriver(formData: FormData) {
           actorId: session.user.id
         }
       }
+    },
+    include: {
+      resident: { include: { profile: true } },
+      contact: true,
+      assignedDriver: { include: { profile: true } }
     }
   });
+
+  const driverPhone = updatedRequest.assignedDriver?.profile?.phone;
+  if (driverPhone) {
+    await sendWhatsApp({
+      to: driverPhone,
+      body: `New job assigned: ${updatedRequest.title} pickup: ${updatedRequest.address}`,
+      template: "DRIVER_ASSIGNED",
+      requestId: updatedRequest.id
+    });
+  }
+
+  const residentPhone = updatedRequest.resident?.profile?.phone ?? updatedRequest.contact?.phone;
+  const driverName =
+    updatedRequest.assignedDriver?.name ??
+    updatedRequest.assignedDriver?.email ??
+    "your driver";
+  if (residentPhone) {
+    await notifyRequestEvent({
+      requestId: updatedRequest.id,
+      eventType: "DRIVER_ASSIGNED",
+      toPhone: residentPhone,
+      message: `Driver assigned: ${driverName}`
+    });
+  }
 
   revalidatePath("/admin");
 }

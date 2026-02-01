@@ -1,5 +1,5 @@
 import { prisma } from "@/server/db";
-import { getWhatsAppProvider } from "./";
+import { sendWhatsApp } from "./provider";
 import { parseInboundText } from "./parser";
 import { normalizePhoneE164 } from "./phone";
 
@@ -28,14 +28,16 @@ function extractProfileName(rawPayload: unknown): string | undefined {
 
 export async function ingestInboundWhatsapp({ phoneRaw, text, rawPayload }: IngestInboundParams) {
   const phoneE164 = phoneRaw ? normalizePhoneE164(phoneRaw) : "unknown";
+  const toNumber = process.env.WHATSAPP_PHONE_NUMBER_ID ?? "kasilink";
 
   await prisma.whatsappMessage.create({
     data: {
-      direction: "IN",
-      phoneE164,
-      text: text?.trim(),
-      status: "RECEIVED",
-      rawPayload
+      to: toNumber,
+      from: phoneE164,
+      direction: "INBOUND",
+      body: text?.trim() ?? "No text",
+      status: "SENT",
+      provider: process.env.WHATSAPP_PROVIDER ?? "stub"
     }
   });
 
@@ -80,7 +82,7 @@ export async function ingestInboundWhatsapp({ phoneRaw, text, rawPayload }: Inge
     await sendReply({
       phoneE164,
       text: "Sharp ✅ We got you. We will call you back soon.",
-      rawPayload: { kind: "CALLBACK" }
+      requestId: null
     });
 
     return { kind: "CALLBACK" };
@@ -127,7 +129,7 @@ export async function ingestInboundWhatsapp({ phoneRaw, text, rawPayload }: Inge
     await sendReply({
       phoneE164,
       text: `Request received ✅ Ref: ${shortRef}. We’ll update you here on WhatsApp.`,
-      rawPayload: { kind: "REQUEST", requestId: request.id }
+      requestId: request.id
     });
 
     return { kind: "REQUEST", createdRequestId: request.id };
@@ -139,32 +141,15 @@ export async function ingestInboundWhatsapp({ phoneRaw, text, rawPayload }: Inge
 async function sendReply({
   phoneE164,
   text,
-  rawPayload
+  requestId
 }: {
   phoneE164: string;
   text: string;
-  rawPayload: Record<string, unknown>;
+  requestId: string | null;
 }) {
-  const provider = getWhatsAppProvider();
-  let status = "SENT";
-  let messageId: string | undefined;
-
-  try {
-    const result = await provider.sendText({ to: phoneE164, text });
-    messageId = result.messageId;
-  } catch (error) {
-    status = "FAILED";
-    console.error("WhatsApp send failed", error);
-  }
-
-  await prisma.whatsappMessage.create({
-    data: {
-      direction: "OUT",
-      phoneE164,
-      messageId,
-      text,
-      status,
-      rawPayload
-    }
+  await sendWhatsApp({
+    to: phoneE164,
+    body: text,
+    requestId
   });
 }
