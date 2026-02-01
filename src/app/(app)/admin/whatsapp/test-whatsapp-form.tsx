@@ -26,7 +26,8 @@ export function TestWhatsAppForm({ requests }: TestWhatsAppFormProps) {
     setIsSubmitting(true);
     setError(null);
 
-    const formData = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const formData = new FormData(formElement);
     const response = await fetch("/api/whatsapp/test", {
       method: "POST",
       body: formData
@@ -39,7 +40,7 @@ export function TestWhatsAppForm({ requests }: TestWhatsAppFormProps) {
       return;
     }
 
-    event.currentTarget.reset();
+    formElement.reset();
     setIsSubmitting(false);
     router.refresh();
   };
