@@ -3,6 +3,7 @@ import { RequestEventType, ServiceRequestStatus } from "@prisma/client";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
+import { notifyRequestEvent } from "@/server/whatsapp";
 
 export async function POST(_request: Request, { params }: { params: { id: string } }) {
   const session = await getServerAuthSession();
@@ -22,7 +23,7 @@ export async function POST(_request: Request, { params }: { params: { id: string
     return NextResponse.json({ error: "Request already submitted." }, { status: 400 });
   }
 
-  await prisma.serviceRequest.update({
+  const updatedRequest = await prisma.serviceRequest.update({
     where: { id: params.id },
     data: {
       status: ServiceRequestStatus.SUBMITTED,
@@ -34,8 +35,19 @@ export async function POST(_request: Request, { params }: { params: { id: string
           actorId: session.user.id
         }
       }
-    }
+    },
+    include: { resident: { include: { profile: true } } }
   });
+
+  const phone = updatedRequest.resident?.profile?.phone;
+  if (phone) {
+    await notifyRequestEvent({
+      requestId: updatedRequest.id,
+      eventType: "REQUEST_SUBMITTED",
+      toPhone: phone,
+      message: `Request submitted: ${updatedRequest.title} (ID: ${updatedRequest.id.slice(-6).toUpperCase()})`
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

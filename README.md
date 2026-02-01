@@ -27,6 +27,10 @@ Create a `.env` file in the repo root:
 DATABASE_URL="postgresql://kasilink:kasilink@127.0.0.1:5433/kasilink?schema=public"
 NEXTAUTH_SECRET="dev-secret"
 NEXTAUTH_URL="http://localhost:3000"
+WHATSAPP_PROVIDER=stub
+WHATSAPP_VERIFY_TOKEN=dev_verify_token
+WHATSAPP_ACCESS_TOKEN=
+WHATSAPP_PHONE_NUMBER_ID=
 ```
 
 ### 4. Run migrations and seed data
@@ -47,8 +51,18 @@ All demo users share the password `Password123!`:
 - `driver@kasilink.local`
 - `admin@kasilink.local`
 
+## WhatsApp setup
+KasiLink ships with a stub WhatsApp provider for local MVP testing. Use the env vars below in `.env` (see `.env.example`):
+- `WHATSAPP_PROVIDER` (`stub` or `meta`)
+- `WHATSAPP_VERIFY_TOKEN` (used for webhook verification)
+- `WHATSAPP_ACCESS_TOKEN` (Meta Cloud API access token)
+- `WHATSAPP_PHONE_NUMBER_ID` (Meta Cloud API phone number ID)
+
+Use the dev simulator endpoint in development to inject messages without Meta:
+`POST /api/whatsapp/dev-simulate` with `{ "phone": "+2782...", "text": "water address: 12 Main St" }`.
+
 ## Prisma notes (Windows)
-If Prisma generate or migrate fails on Windows with EPERM errors, stop the Next.js dev server before running:
+If Prisma generate or migrate fails on Windows with EPERM errors (for example, `rename query_engine-windows.dll.node`), stop the Next.js dev server before running:
 ```bash
 npm run prisma:generate
 npm run prisma:migrate

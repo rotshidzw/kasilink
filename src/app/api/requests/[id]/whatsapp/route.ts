@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
-import { sendWhatsAppMessage } from "@/server/notifications/whatsapp";
+import { sendWhatsApp } from "@/server/whatsapp";
+import { normalizePhoneE164 } from "@/server/whatsapp/phone";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerAuthSession();
@@ -32,6 +33,12 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return NextResponse.json({ error: "No phone on file" }, { status: 400 });
   }
 
-  await sendWhatsAppMessage({ to: phone, message });
+  const phoneE164 = normalizePhoneE164(phone);
+  await sendWhatsApp({
+    to: phoneE164,
+    body: message,
+    template: "ADMIN_UPDATE",
+    requestId: params.id
+  });
   return NextResponse.json({ ok: true });
 }

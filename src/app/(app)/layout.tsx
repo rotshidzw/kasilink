@@ -24,6 +24,7 @@ const navByRole = {
   ],
   ADMIN: [
     { href: "/admin", label: "Admin" },
+    { href: "/admin/whatsapp", label: "WhatsApp" },
     { href: "/requests", label: "Requests" },
     { href: "/drivers", label: "Drivers" },
     { href: "/business", label: "Businesses" },
@@ -31,6 +32,7 @@ const navByRole = {
   ],
   CALLCENTER: [
     { href: "/callcenter", label: "Call center" },
+    { href: "/admin/whatsapp", label: "WhatsApp" },
     { href: "/callcenter/callbacks", label: "Callbacks" },
     { href: "/requests", label: "Requests" },
     { href: "/events", label: "Events" }
