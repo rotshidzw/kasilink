@@ -116,6 +116,7 @@ model User {
   wallet         Wallet?
   disputesOpened Dispute[]        @relation("DisputesOpened")
   disputesAssigned Dispute[]      @relation("DisputesAssigned")
+  whatsappLinks  WhatsappLink[]
   createdVouchers Voucher[]       @relation("VoucherCreator")
   voucherRedemptions VoucherRedemption[]
   requestEvents  ServiceRequestEvent[] @relation("RequestEventActor")
@@ -272,6 +273,7 @@ model AssistedContact {
   createdById String?
   createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
   requests    ServiceRequest[]
+  whatsappLinks WhatsappLink[]
 }
 
 model CallbackTicket {
