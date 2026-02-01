@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/server/db";
 import { getServerAuthSession } from "@/server/auth";
-import { sendWhatsAppMessage } from "@/server/notifications/whatsapp";
+import { getWhatsAppProvider } from "@/server/whatsapp";
+import { normalizePhoneE164 } from "@/server/whatsapp/phone";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerAuthSession();
@@ -32,6 +33,28 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return NextResponse.json({ error: "No phone on file" }, { status: 400 });
   }
 
-  await sendWhatsAppMessage({ to: phone, message });
+  const phoneE164 = normalizePhoneE164(phone);
+  const provider = getWhatsAppProvider();
+  let status = "SENT";
+  let messageId: string | undefined;
+
+  try {
+    const result = await provider.sendText({ to: phoneE164, text: message });
+    messageId = result.messageId;
+  } catch (error) {
+    status = "FAILED";
+    console.error("WhatsApp send failed", error);
+  }
+
+  await prisma.whatsappMessage.create({
+    data: {
+      direction: "OUT",
+      phoneE164,
+      messageId,
+      text: message,
+      status,
+      rawPayload: { requestId: params.id, source: "admin-request" }
+    }
+  });
   return NextResponse.json({ ok: true });
 }

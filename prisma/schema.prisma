@@ -287,6 +287,35 @@ model CallbackTicket {
   resolvedBy       User?          @relation("CallbackResolvedBy", fields: [resolvedByUserId], references: [id], onDelete: SetNull)
 }
 
+model WhatsappLink {
+  id        String   @id @default(cuid())
+  phoneE164 String   @unique
+  userId    String?
+  contactId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  contact AssistedContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  @@index([phoneE164])
+}
+
+model WhatsappMessage {
+  id         String   @id @default(cuid())
+  direction  String
+  phoneE164  String
+  messageId  String?
+  text       String?
+  mediaUrl   String?
+  mediaType  String?
+  status     String?
+  rawPayload Json
+  createdAt  DateTime @default(now())
+
+  @@index([phoneE164, createdAt])
+}
+
 model VoiceNoteRequest {
   id                String          @id @default(cuid())
   phone             String

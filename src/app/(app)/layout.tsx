@@ -24,6 +24,7 @@ const navByRole = {
   ],
   ADMIN: [
     { href: "/admin", label: "Admin" },
+    { href: "/admin/whatsapp", label: "WhatsApp" },
     { href: "/requests", label: "Requests" },
     { href: "/drivers", label: "Drivers" },
     { href: "/business", label: "Businesses" },
