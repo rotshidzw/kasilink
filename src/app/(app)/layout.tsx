@@ -32,6 +32,7 @@ const navByRole = {
   ],
   CALLCENTER: [
     { href: "/callcenter", label: "Call center" },
+    { href: "/admin/whatsapp", label: "WhatsApp" },
     { href: "/callcenter/callbacks", label: "Callbacks" },
     { href: "/requests", label: "Requests" },
     { href: "/events", label: "Events" }
